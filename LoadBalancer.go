@@ -30,3 +30,7 @@ func (lb *LoadBalancer) getNextServer(servers []*Servers) *Server {
 	return nil
 
 }
+
+func (s *Server) ReverseProxy() *httputil.ReverseProxy {
+	return httputil.NewSingleHostReverseProxy(s.URL)
+}
