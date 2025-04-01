@@ -34,3 +34,14 @@ func (lb *LoadBalancer) getNextServer(servers []*Servers) *Server {
 func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 	return httputil.NewSingleHostReverseProxy(s.URL)
 }
+
+http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	server := lb.getNextServer(servers)
+	if (server == nil) {
+		http.Error(w, "No healthy server available", http.StatusServiceUnavailable)
+		return
+	}
+
+	w.Header().Add("X-Forwarded-Server", server.URL.String())
+	server.ReverseProxy().ServeHTTP(w, r)
+})
