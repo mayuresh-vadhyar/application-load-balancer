@@ -3,12 +3,6 @@ type LoadBalancer struct {
     Mutex   sync.Mutex
 }
 
-type Server struct {
-    URL       *url.URL
-    IsHealthy bool
-    Mutex     sync.Mutex
-}
-
 func (lb *LoadBalancer) getNextServer(servers []*Servers) *Server {
 	lb.Mutex.Lock()
 	defer lb.Mutex.Unlock()
@@ -29,10 +23,6 @@ func (lb *LoadBalancer) getNextServer(servers []*Servers) *Server {
 
 	return nil
 
-}
-
-func (s *Server) ReverseProxy() *httputil.ReverseProxy {
-	return httputil.NewSingleHostReverseProxy(s.URL)
 }
 
 http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
