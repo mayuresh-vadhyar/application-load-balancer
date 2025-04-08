@@ -1,9 +1,11 @@
+package LoadBalancer
+
 type LoadBalancer struct {
     Current int
     Mutex   sync.Mutex
 }
 
-func (lb *LoadBalancer) getNextServer(servers []*Servers) *Server {
+func (lb *LoadBalancer) GetNextServer(servers []*Servers) *Server {
 	lb.Mutex.Lock()
 	defer lb.Mutex.Unlock()
 	

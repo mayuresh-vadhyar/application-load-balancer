@@ -1,3 +1,5 @@
+package LoadBalancer
+
 type Server struct {
     URL       *url.URL
     IsHealthy bool
