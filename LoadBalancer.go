@@ -12,13 +12,13 @@ func (lb *LoadBalancer) GetNextServer(servers []*Servers) *Server {
 	countOfServers := len(servers)
 	for i:=0; i < countOfServers; i++ {
 		lb.Current = (lb.Current + 1) % countOfServers
-		nextServer = servers[idx]
+		nextServer = servers[i]
 
-		nextServer.Mutex.Lock
+		nextServer.Mutex.Lock()
 		isHealthy = nextServer.IsHealthy
-		nextServer.Mutex.Unlock
+		nextServer.Mutex.Unlock()
 
-		if(isHealthy) {
+		if isHealthy {
 			return nextServer
 		}
 	}
@@ -28,7 +28,7 @@ func (lb *LoadBalancer) GetNextServer(servers []*Servers) *Server {
 }
 
 http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	server := lb.getNextServer(servers)
+	server := lb.GetNextServer(config.Servers)
 	if (server == nil) {
 		http.Error(w, "No healthy server available", http.StatusServiceUnavailable)
 		return
