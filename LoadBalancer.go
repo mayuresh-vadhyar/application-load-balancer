@@ -1,4 +1,4 @@
-package LoadBalancer
+package main
 
 type LoadBalancer struct {
     Current int

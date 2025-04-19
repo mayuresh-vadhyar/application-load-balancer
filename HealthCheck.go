@@ -1,4 +1,4 @@
-package LoadBalancer
+package main
 
 func HealthCheck(s *Server, healthCheckInterval time.Duration) {
     for range time.Tick(healthCheckInterval) {
