@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
-	"time"
 )
 
 type Config struct {
-	Port                string        `json:"port"`
-	HealthCheckInterval time.Duration `json:"healthCheckInterval"`
-	Servers             []string      `json:"servers"`
+	Port                string   `json:"port"`
+	HealthCheckInterval string   `json:"healthCheckInterval"`
+	Servers             []string `json:"servers"`
 }
 
 func GetConfig() Config {

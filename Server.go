@@ -6,6 +6,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"sync"
+	"time"
 )
 
 type Server struct {
@@ -38,17 +39,28 @@ func CreateServerList(serverUrls []string) []*Server {
 	return servers
 }
 
+func getHealthCheckInterval(healthCheckInterval string) time.Duration {
+	interval, err := time.ParseDuration(healthCheckInterval)
+	if err != nil {
+		interval = (time.Second * 2)
+	}
+	return interval
+}
+
 func main() {
 	config := GetConfig()
+
+	servers := CreateServerList(config.Servers)
+	countOfServers := len(servers)
+	interval := getHealthCheckInterval(config.HealthCheckInterval)
+
+	for i := 0; i < countOfServers; i++ {
+		go HealthCheck(servers[i], interval)
+	}
+
 	log.Println("Starting load balancer on port: ", config.Port)
 	err := http.ListenAndServe(config.Port, nil)
 	if err != nil {
 		log.Fatalf("Error starting load balancer: %s\n", err.Error())
-	}
-
-	servers := CreateServerList(config.Servers)
-	countOfServers := len(servers)
-	for i := 0; i < countOfServers; i++ {
-		HealthCheck(servers[i], config.HealthCheckInterval)
 	}
 }
