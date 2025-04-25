@@ -58,6 +58,19 @@ func main() {
 		go HealthCheck(servers[i], interval)
 	}
 
+	lb := &LoadBalancer{Current: -1}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		server := lb.GetNextServer(servers)
+		if server == nil {
+			http.Error(w, "No healthy server available", http.StatusServiceUnavailable)
+			return
+		}
+
+		w.Header().Add("X-Forwarded-Server", server.URL.String())
+		server.ReverseProxy().ServeHTTP(w, r)
+	})
+
 	log.Println("Starting load balancer on port: ", config.Port)
 	err := http.ListenAndServe(config.Port, nil)
 	if err != nil {
