@@ -71,7 +71,7 @@ func main() {
 		server.ReverseProxy().ServeHTTP(w, r)
 	})
 
-	log.Println("Starting load balancer on port: ", config.Port)
+	log.Println("Starting load balancer on port", config.Port)
 	err := http.ListenAndServe(config.Port, nil)
 	if err != nil {
 		log.Fatalf("Error starting load balancer: %s\n", err.Error())
