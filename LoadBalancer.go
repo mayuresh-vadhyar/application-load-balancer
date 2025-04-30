@@ -16,7 +16,7 @@ func (lb *LoadBalancer) GetNextServer(servers []*Server) *Server {
 	countOfServers := len(servers)
 	for i := 0; i < countOfServers; i++ {
 		lb.Current = (lb.Current + 1) % countOfServers
-		nextServer := servers[i]
+		nextServer := servers[lb.Current]
 
 		nextServer.Mutex.Lock()
 		isHealthy := nextServer.IsHealthy
