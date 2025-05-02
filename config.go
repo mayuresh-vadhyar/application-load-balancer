@@ -10,6 +10,7 @@ type Config struct {
 	Port                string   `json:"port"`
 	HealthCheckInterval string   `json:"healthCheckInterval"`
 	Servers             []string `json:"servers"`
+	Weights             []int    `json:"weights"`
 }
 
 func GetConfig() Config {
