@@ -41,6 +41,30 @@ func CreateServerList(serverUrls []string) []*Server {
 	return servers
 }
 
+func CreateServerListForWRR(serverUrls []string, weights []int) []*Server {
+	var servers []*Server
+	countOfServers := len(serverUrls)
+
+	for i := 0; i < countOfServers; i++ {
+		parsedUrl, err := url.Parse(serverUrls[i])
+		log.Println(parsedUrl)
+		if err != nil {
+			continue
+		}
+
+		server := &Server{
+			URL:           parsedUrl,
+			Weight:        weights[i],
+			CurrentWeight: 0,
+			IsHealthy:     true,
+		}
+
+		servers = append(servers, server)
+	}
+
+	return servers
+}
+
 func getHealthCheckInterval(healthCheckInterval string) time.Duration {
 	interval, err := time.ParseDuration(healthCheckInterval)
 	if err != nil {
@@ -52,7 +76,8 @@ func getHealthCheckInterval(healthCheckInterval string) time.Duration {
 func main() {
 	config := GetConfig()
 
-	servers := CreateServerList(config.Servers)
+	servers := CreateServerListForWRR(config.Servers, config.Weights)
+	log.Println("All SERVERS ===", servers)
 	countOfServers := len(servers)
 	interval := getHealthCheckInterval(config.HealthCheckInterval)
 
@@ -63,7 +88,7 @@ func main() {
 	lb := &LoadBalancer{Current: -1}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		server := lb.GetNextServer(servers)
+		server := lb.GetNextServerForWRR(servers)
 		if server == nil {
 			http.Error(w, "No healthy server available", http.StatusServiceUnavailable)
 			return
