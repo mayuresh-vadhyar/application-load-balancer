@@ -66,7 +66,7 @@ func (lb *LoadBalancer) GetNextServerForWRR(servers []*Server) *Server {
 		return nil
 	}
 	nextServer.CurrentWeight -= totalWeight
-	nextServer.Mutex.Lock()
+	nextServer.Mutex.Unlock()
 	log.Println("Returning server :", nextServer.URL.String())
 	return nextServer
 }
