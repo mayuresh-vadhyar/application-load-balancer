@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"sync"
 )
 
@@ -41,7 +40,6 @@ func (lb *LoadBalancer) GetNextServerForWRR(servers []*Server) *Server {
 
 	for _, server := range servers {
 		server.Mutex.Lock()
-		log.Println(server.URL.String(), " is healthy -> ", server.IsHealthy)
 		if !server.IsHealthy {
 			server.Mutex.Unlock()
 			continue
@@ -62,11 +60,9 @@ func (lb *LoadBalancer) GetNextServerForWRR(servers []*Server) *Server {
 	}
 
 	if nextServer == nil {
-		log.Println("Returning nil")
 		return nil
 	}
 	nextServer.CurrentWeight -= totalWeight
 	nextServer.Mutex.Unlock()
-	log.Println("Returning server :", nextServer.URL.String())
 	return nextServer
 }

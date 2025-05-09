@@ -77,7 +77,6 @@ func main() {
 	config := GetConfig()
 
 	servers := CreateServerListForWRR(config.Servers, config.Weights)
-	log.Println("All SERVERS ===", servers)
 	countOfServers := len(servers)
 	interval := getHealthCheckInterval(config.HealthCheckInterval)
 
