@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	Algorithm           string   `json:"algorithm"`
 	Port                string   `json:"port"`
 	HealthCheckInterval string   `json:"healthCheckInterval"`
 	Servers             []string `json:"servers"`
