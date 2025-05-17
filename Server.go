@@ -73,10 +73,28 @@ func getHealthCheckInterval(healthCheckInterval string) time.Duration {
 	return interval
 }
 
+func getLoadBalancingStrategy(algorithm string) LoadBalancingStrategy {
+	if algorithm == "" {
+		algorithm = "RR"
+	}
+
+	switch algorithm {
+	case "RR":
+		return &RoundRobinStrategy{Current: -1}
+	case "WRR":
+		return &WeightedRoundRobinStrategy{Current: -1}
+	default:
+		log.Fatalf("Unknown algorithm: %s", algorithm)
+	}
+
+	return nil
+}
+
 func main() {
 	config := GetConfig()
+	lb := getLoadBalancingStrategy(config.Algorithm)
+	servers := lb.CreateServerList(config)
 
-	servers := CreateServerListForWRR(config.Servers, config.Weights)
 	countOfServers := len(servers)
 	interval := getHealthCheckInterval(config.HealthCheckInterval)
 
@@ -84,10 +102,8 @@ func main() {
 		go HealthCheck(servers[i], interval)
 	}
 
-	lb := &LoadBalancer{Current: -1}
-
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		server := lb.GetNextServerForWRR(servers)
+		server := lb.GetNextServer(servers)
 		if server == nil {
 			http.Error(w, "No healthy server available", http.StatusServiceUnavailable)
 			return

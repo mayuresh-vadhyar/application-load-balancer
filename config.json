@@ -1,4 +1,5 @@
 {
+  "Algorithm" : "WRR",
   "Port": ":5000",
   "HealthCheckInterval": "2s",
   "Servers": [
