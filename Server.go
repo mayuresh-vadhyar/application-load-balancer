@@ -21,26 +21,6 @@ func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 	return httputil.NewSingleHostReverseProxy(s.URL)
 }
 
-func CreateServerList(serverUrls []string) []*Server {
-	var servers []*Server
-
-	for _, rawUrl := range serverUrls {
-		parsedUrl, err := url.Parse(rawUrl)
-		if err != nil {
-			continue
-		}
-
-		server := &Server{
-			URL:       parsedUrl,
-			IsHealthy: true,
-		}
-
-		servers = append(servers, server)
-	}
-
-	return servers
-}
-
 func CreateServerListForWRR(serverUrls []string, weights []int) []*Server {
 	var servers []*Server
 	countOfServers := len(serverUrls)
