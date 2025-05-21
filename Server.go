@@ -21,30 +21,6 @@ func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 	return httputil.NewSingleHostReverseProxy(s.URL)
 }
 
-func CreateServerListForWRR(serverUrls []string, weights []int) []*Server {
-	var servers []*Server
-	countOfServers := len(serverUrls)
-
-	for i := 0; i < countOfServers; i++ {
-		parsedUrl, err := url.Parse(serverUrls[i])
-		log.Println(parsedUrl)
-		if err != nil {
-			continue
-		}
-
-		server := &Server{
-			URL:           parsedUrl,
-			Weight:        weights[i],
-			CurrentWeight: 0,
-			IsHealthy:     true,
-		}
-
-		servers = append(servers, server)
-	}
-
-	return servers
-}
-
 func getHealthCheckInterval(healthCheckInterval string) time.Duration {
 	interval, err := time.ParseDuration(healthCheckInterval)
 	if err != nil {
