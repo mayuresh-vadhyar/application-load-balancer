@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"sync"
 )
 
@@ -13,7 +14,25 @@ type IPHashStrategy struct {
 }
 
 func (lb *IPHashStrategy) CreateServerList(config Config) []*Server {
-	panic("unimplemented CreateServerList of IP Hash Strategy")
+	var servers []*Server
+	serverUrls := config.Servers
+
+	for _, rawUrl := range serverUrls {
+		parsedUrl, err := url.Parse(rawUrl)
+		if err != nil {
+			continue
+		}
+
+		server := &Server{
+			URL:       parsedUrl,
+			IsHealthy: true,
+		}
+
+		servers = append(servers, server)
+	}
+
+	return servers
+
 }
 
 func (lb *IPHashStrategy) GetNextServer(servers []*Server, r *http.Request) *Server {
