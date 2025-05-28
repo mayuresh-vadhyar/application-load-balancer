@@ -1,9 +1,12 @@
 package main
 
-import "log"
+import (
+	"log"
+	"net/http"
+)
 
 type LoadBalancingStrategy interface {
-	GetNextServer([]*Server) *Server
+	GetNextServer(servers []*Server, r *http.Request) *Server
 	CreateServerList(Config) []*Server
 }
 

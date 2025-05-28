@@ -42,7 +42,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		server := lb.GetNextServer(servers)
+		server := lb.GetNextServer(servers, r)
 		if server == nil {
 			http.Error(w, "No healthy server available", http.StatusServiceUnavailable)
 			return
