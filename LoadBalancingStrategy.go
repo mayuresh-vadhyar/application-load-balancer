@@ -22,6 +22,8 @@ func GetLoadBalancingStrategy(algorithm string) LoadBalancingStrategy {
 		return &WeightedRoundRobinStrategy{Current: -1}
 	case "IPHash":
 		return &IPHashStrategy{}
+	case "UrlHash":
+		return &URLHashStrategy{}
 	default:
 		log.Fatalf("Unknown algorithm: %s", algorithm)
 	}

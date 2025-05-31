@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"net/url"
 	"sync"
 )
@@ -37,7 +38,7 @@ func (lb *WeightedRoundRobinStrategy) CreateServerList(config Config) []*Server 
 	return servers
 }
 
-func (lb *WeightedRoundRobinStrategy) GetNextServer(servers []*Server) *Server {
+func (lb *WeightedRoundRobinStrategy) GetNextServer(servers []*Server, _ *http.Request) *Server {
 	lb.Mutex.Lock()
 	defer lb.Mutex.Unlock()
 
