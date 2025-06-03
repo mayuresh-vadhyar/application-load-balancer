@@ -18,6 +18,13 @@ func (lb *WeightedRoundRobinStrategy) CreateServerList(config Config) []*Server 
 
 	var servers []*Server
 	countOfServers := len(serverUrls)
+
+	if weights == nil {
+		weights := make([]int, countOfServers)
+		for i := range weights {
+			weights[i] = 1
+		}
+	}
 	for i := 0; i < countOfServers; i++ {
 		parsedUrl, err := url.Parse(serverUrls[i])
 		log.Println(parsedUrl)
