@@ -36,13 +36,13 @@ func (lb *IPHashStrategy) CreateServerList(config Config) []*Server {
 }
 
 func (lb *IPHashStrategy) GetNextServer(servers []*Server, r *http.Request) *Server {
-	n := len(servers)
 	clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		log.Print("Failed to parse client IP from: ", r.RemoteAddr)
 		return nil
 	}
 
+	n := len(servers)
 	hash := fnv.New32a()
 	hash.Write([]byte(clientIP))
 	i := int(hash.Sum32()) % n

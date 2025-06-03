@@ -1,6 +1,7 @@
 package main
 
 import (
+	"hash/fnv"
 	"net/http"
 	"net/url"
 	"sync"
@@ -21,8 +22,8 @@ func (lb *URLHashStrategy) CreateServerList(config Config) []*Server {
 		}
 
 		server := &Server{
-			URL: 	   parsedUrl,
-			IsHealthy: true
+			URL:       parsedUrl,
+			IsHealthy: true,
 		}
 
 		servers = append(servers, server)
@@ -33,5 +34,29 @@ func (lb *URLHashStrategy) CreateServerList(config Config) []*Server {
 }
 
 func (lb *URLHashStrategy) GetNextServer(servers []*Server, r *http.Request) *Server {
-	panic("unimplemented GetNextServer of URL Hash Strategy")
+	url := r.URL.Path
+	n := len(servers)
+	hash := fnv.New32a()
+	hash.Write([]byte(url))
+	i := int(hash.Sum32()) % n
+
+	startIndex := i
+
+	for {
+		server := servers[i]
+		server.Mutex.Lock()
+		isHealthy := server.IsHealthy
+		server.Mutex.Unlock()
+
+		if isHealthy {
+			return server
+		}
+
+		i = (i + 1) % n
+		if i == startIndex {
+			break
+		}
+	}
+
+	return nil
 }

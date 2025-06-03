@@ -38,7 +38,7 @@ func (lb *WeightedRoundRobinStrategy) CreateServerList(config Config) []*Server 
 	return servers
 }
 
-func (lb *WeightedRoundRobinStrategy) GetNextServer(servers []*Server, _ *http.Request) *Server {
+func (lb *WeightedRoundRobinStrategy) GetNextServer(servers []*Server, r *http.Request) *Server {
 	lb.Mutex.Lock()
 	defer lb.Mutex.Unlock()
 
