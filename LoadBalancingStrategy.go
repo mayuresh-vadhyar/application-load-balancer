@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+
+	"github.com/mayuresh-vadhyar/application-load-balancer/constants"
 )
 
 type LoadBalancingStrategy interface {
@@ -12,17 +14,17 @@ type LoadBalancingStrategy interface {
 
 func GetLoadBalancingStrategy(algorithm string) LoadBalancingStrategy {
 	if algorithm == "" {
-		algorithm = "RR"
+		algorithm = constants.ROUND_ROBIN
 	}
 
 	switch algorithm {
-	case "RR":
+	case constants.ROUND_ROBIN:
 		return &RoundRobinStrategy{Current: -1}
-	case "WRR":
+	case constants.WEIGHTED_ROUND_ROBIN:
 		return &WeightedRoundRobinStrategy{Current: -1}
-	case "IPHash":
+	case constants.IP_HASH:
 		return &IPHashStrategy{}
-	case "UrlHash":
+	case constants.URL_HASH:
 		return &URLHashStrategy{}
 	default:
 		log.Fatalf("Unknown algorithm: %s", algorithm)
