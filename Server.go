@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -15,6 +16,11 @@ type Server struct {
 	Weight        int
 	CurrentWeight int
 	Mutex         sync.Mutex
+}
+
+type ServerPayload struct {
+	Url    string `json:"url"`
+	Weight int    `json:"weight"`
 }
 
 func (s *Server) ReverseProxy() *httputil.ReverseProxy {
@@ -40,6 +46,42 @@ func main() {
 	for i := 0; i < countOfServers; i++ {
 		go HealthCheck(servers[i], interval)
 	}
+
+	http.HandleFunc("/server", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var payload ServerPayload
+		err := json.NewDecoder(r.Body).Decode(&payload)
+		if err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		for _, server := range servers {
+			if server.URL.String() == payload.Url {
+				http.Error(w, "Server already registered", http.StatusFound)
+				return
+			}
+		}
+
+		parsedUrl, _ := url.Parse(payload.Url)
+		server := &Server{
+			URL:       parsedUrl,
+			IsHealthy: true,
+		}
+
+		servers = append(servers, server)
+		w.WriteHeader(http.StatusCreated)
+		encodeErr := json.NewEncoder(w).Encode(server)
+		if encodeErr != nil {
+			http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		server := lb.GetNextServer(servers, r)
