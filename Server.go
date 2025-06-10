@@ -25,6 +25,8 @@ type ServerPayload struct {
 	Weight int    `json:"weight"`
 }
 
+var Servers []*Server
+
 func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 	return httputil.NewSingleHostReverseProxy(s.URL)
 }
@@ -37,64 +39,56 @@ func getHealthCheckInterval(healthCheckInterval string) time.Duration {
 	return interval
 }
 
-func CreateServer(w http.ResponseWriter, r *http.Request) {}
+func CreateServer(w http.ResponseWriter, r *http.Request) {
+	var newServer ServerPayload
+	decodeErr := json.NewDecoder(r.Body).Decode(&newServer)
+	w.Header().Set("Content-Type", "application/json")
+	if decodeErr != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	for _, server := range Servers {
+		if server.URL.String() == newServer.Url {
+			http.Error(w, "Server already registered", http.StatusFound)
+			return
+		}
+	}
+
+	parsedUrl, _ := url.Parse(newServer.Url)
+	server := &Server{
+		URL:       parsedUrl,
+		IsHealthy: true,
+	}
+
+	Servers = append(Servers, server)
+	w.WriteHeader(http.StatusCreated)
+	encodeErr := json.NewEncoder(w).Encode(server)
+	if encodeErr != nil {
+		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
+	}
+}
 
 func DeleteServer(w http.ResponseWriter, r *http.Request) {}
 
 func main() {
 	config := GetConfig()
 	lb := GetLoadBalancingStrategy(config.Algorithm)
-	servers := lb.CreateServerList(config)
+	Servers = lb.CreateServerList(config)
 
-	countOfServers := len(servers)
+	countOfServers := len(Servers)
 	interval := getHealthCheckInterval(config.HealthCheckInterval)
 
 	for i := 0; i < countOfServers; i++ {
-		go HealthCheck(servers[i], interval)
+		go HealthCheck(Servers[i], interval)
 	}
 
 	router := mux.NewRouter()
 	router.HandleFunc("/server", CreateServer).Methods("POST")
 	router.HandleFunc("/server", DeleteServer).Methods("DELETE")
 
-	http.HandleFunc("/server", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		var payload ServerPayload
-		err := json.NewDecoder(r.Body).Decode(&payload)
-		if err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
-			return
-		}
-
-		for _, server := range servers {
-			if server.URL.String() == payload.Url {
-				http.Error(w, "Server already registered", http.StatusFound)
-				return
-			}
-		}
-
-		parsedUrl, _ := url.Parse(payload.Url)
-		server := &Server{
-			URL:       parsedUrl,
-			IsHealthy: true,
-		}
-
-		servers = append(servers, server)
-		w.WriteHeader(http.StatusCreated)
-		encodeErr := json.NewEncoder(w).Encode(server)
-		if encodeErr != nil {
-			http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
-
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		server := lb.GetNextServer(servers, r)
+		server := lb.GetNextServer(Servers, r)
 		if server == nil {
 			http.Error(w, "No healthy server available", http.StatusServiceUnavailable)
 			return
