@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"sync"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 type Server struct {
@@ -35,6 +37,10 @@ func getHealthCheckInterval(healthCheckInterval string) time.Duration {
 	return interval
 }
 
+func CreateServer(w http.ResponseWriter, r *http.Request) {}
+
+func DeleteServer(w http.ResponseWriter, r *http.Request) {}
+
 func main() {
 	config := GetConfig()
 	lb := GetLoadBalancingStrategy(config.Algorithm)
@@ -46,6 +52,10 @@ func main() {
 	for i := 0; i < countOfServers; i++ {
 		go HealthCheck(servers[i], interval)
 	}
+
+	router := mux.NewRouter()
+	router.HandleFunc("/server", CreateServer).Methods("POST")
+	router.HandleFunc("/server", DeleteServer).Methods("DELETE")
 
 	http.HandleFunc("/server", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
