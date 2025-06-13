@@ -44,7 +44,7 @@ func CreateServer(w http.ResponseWriter, r *http.Request) {
 	decodeErr := json.NewDecoder(r.Body).Decode(&newServer)
 	w.Header().Set("Content-Type", "application/json")
 	if decodeErr != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, decodeErr.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -69,7 +69,30 @@ func CreateServer(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DeleteServer(w http.ResponseWriter, r *http.Request) {}
+func DeleteServer(w http.ResponseWriter, r *http.Request) {
+	var target ServerPayload
+	decodeErr := json.NewDecoder(r.Body).Decode(&target)
+	w.Header().Set("Content-Type", "application/json")
+	if decodeErr != nil {
+		http.Error(w, decodeErr.Error(), http.StatusBadRequest)
+		return
+	}
+
+	serverFound := false
+	for i, server := range Servers {
+		if server.URL.String() == target.Url {
+			serverFound = true
+			Servers = append(Servers[:i], Servers[i+1:]...)
+			break
+		}
+	}
+
+	if serverFound {
+		w.WriteHeader(http.StatusNoContent)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+	}
+}
 
 func main() {
 	config := GetConfig()
