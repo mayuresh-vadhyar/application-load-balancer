@@ -26,6 +26,7 @@ type ServerPayload struct {
 }
 
 var Servers []*Server
+var lb LoadBalancingStrategy
 
 func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 	return httputil.NewSingleHostReverseProxy(s.URL)
@@ -94,9 +95,20 @@ func DeleteServer(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func ProxyHandler(w http.ResponseWriter, r *http.Request) {
+	server := lb.GetNextServer(Servers, r)
+	if server == nil {
+		http.Error(w, "No healthy server available", http.StatusServiceUnavailable)
+		return
+	}
+
+	w.Header().Add("X-Forwarded-Server", server.URL.String())
+	server.ReverseProxy().ServeHTTP(w, r)
+}
+
 func main() {
 	config := GetConfig()
-	lb := GetLoadBalancingStrategy(config.Algorithm)
+	lb = GetLoadBalancingStrategy(config.Algorithm)
 	Servers = lb.CreateServerList(config)
 
 	countOfServers := len(Servers)
@@ -109,17 +121,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/server", CreateServer).Methods("POST")
 	router.HandleFunc("/server", DeleteServer).Methods("DELETE")
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		server := lb.GetNextServer(Servers, r)
-		if server == nil {
-			http.Error(w, "No healthy server available", http.StatusServiceUnavailable)
-			return
-		}
-
-		w.Header().Add("X-Forwarded-Server", server.URL.String())
-		server.ReverseProxy().ServeHTTP(w, r)
-	})
+	router.HandleFunc("/", ProxyHandler)
 
 	log.Println("Starting load balancer on port", config.Port)
 	err := http.ListenAndServe(config.Port, nil)
