@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"net/url"
 
 	"github.com/gorilla/mux"
 )
@@ -28,11 +27,7 @@ func createServer(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	parsedUrl, _ := url.Parse(newServer.Url)
-	server := &Server{
-		URL:       parsedUrl,
-		IsHealthy: true,
-	}
+	server := CreateServer(newServer.Url)
 
 	Servers = append(Servers, server)
 	w.WriteHeader(http.StatusCreated)

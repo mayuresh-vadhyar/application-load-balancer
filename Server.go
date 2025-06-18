@@ -20,6 +20,15 @@ type ServerPayload struct {
 	Weight int    `json:"weight"`
 }
 
+func CreateServer(rawUrl string) *Server {
+	parsedUrl, _ := url.Parse(rawUrl)
+	server := &Server{
+		URL:       parsedUrl,
+		IsHealthy: true,
+	}
+	return server
+}
+
 func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 	return httputil.NewSingleHostReverseProxy(s.URL)
 }
