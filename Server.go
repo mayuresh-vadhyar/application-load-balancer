@@ -29,6 +29,17 @@ func CreateServer(rawUrl string) *Server {
 	return server
 }
 
+func CreateWeightedServer(rawUrl string, weight int) *Server {
+	parsedUrl, _ := url.Parse(rawUrl)
+	server := &Server{
+		URL:           parsedUrl,
+		Weight:        weight,
+		CurrentWeight: 0,
+		IsHealthy:     true,
+	}
+	return server
+}
+
 func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 	return httputil.NewSingleHostReverseProxy(s.URL)
 }
