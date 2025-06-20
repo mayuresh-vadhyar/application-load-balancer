@@ -20,24 +20,32 @@ type ServerPayload struct {
 	Weight int    `json:"weight"`
 }
 
-func CreateServer(rawUrl string) *Server {
-	parsedUrl, _ := url.Parse(rawUrl)
+func CreateServer(rawUrl string) (*Server, error) {
+	parsedUrl, err := url.Parse(rawUrl)
+	if err != nil {
+		return nil, err
+	}
+
 	server := &Server{
 		URL:       parsedUrl,
 		IsHealthy: true,
 	}
-	return server
+	return server, nil
 }
 
-func CreateWeightedServer(rawUrl string, weight int) *Server {
-	parsedUrl, _ := url.Parse(rawUrl)
+func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
+	parsedUrl, err := url.Parse(rawUrl)
+	if err != nil {
+		return nil, err
+	}
+
 	server := &Server{
 		URL:           parsedUrl,
 		Weight:        weight,
 		CurrentWeight: 0,
 		IsHealthy:     true,
 	}
-	return server
+	return server, nil
 }
 
 func (s *Server) ReverseProxy() *httputil.ReverseProxy {
