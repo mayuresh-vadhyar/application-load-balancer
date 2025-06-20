@@ -1,9 +1,7 @@
 package main
 
 import (
-	"log"
 	"net/http"
-	"net/url"
 	"sync"
 )
 
@@ -26,19 +24,10 @@ func (lb *WeightedRoundRobinStrategy) CreateServerList(config Config) []*Server 
 		}
 	}
 	for i := 0; i < countOfServers; i++ {
-		parsedUrl, err := url.Parse(serverUrls[i])
-		log.Println(parsedUrl)
+		server, err := CreateWeightedServer(serverUrls[i], weights[i])
 		if err != nil {
 			continue
 		}
-
-		server := &Server{
-			URL:           parsedUrl,
-			Weight:        weights[i],
-			CurrentWeight: 0,
-			IsHealthy:     true,
-		}
-
 		servers = append(servers, server)
 	}
 

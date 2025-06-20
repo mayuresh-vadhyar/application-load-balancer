@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"net/url"
 	"sync"
 )
 
@@ -16,16 +15,10 @@ func (lbs *RoundRobinStrategy) CreateServerList(config Config) []*Server {
 	serverUrls := config.Servers
 
 	for _, rawUrl := range serverUrls {
-		parsedUrl, err := url.Parse(rawUrl)
+		server, err := CreateServer(rawUrl)
 		if err != nil {
 			continue
 		}
-
-		server := &Server{
-			URL:       parsedUrl,
-			IsHealthy: true,
-		}
-
 		servers = append(servers, server)
 	}
 
