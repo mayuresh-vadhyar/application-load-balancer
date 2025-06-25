@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
 var Servers []*Server
@@ -27,8 +25,13 @@ func createServer(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	server := CreateServer(newServer.Url)
+	server, createErr := CreateServer(newServer.Url)
+	if createErr != nil {
+		http.Error(w, createErr.Error(), http.StatusBadRequest)
+		return
+	}
 
+	// TODO: Add health check routine
 	Servers = append(Servers, server)
 	w.WriteHeader(http.StatusCreated)
 	encodeErr := json.NewEncoder(w).Encode(server)
@@ -48,6 +51,7 @@ func deleteServer(w http.ResponseWriter, r *http.Request) {
 
 	serverFound := false
 	for i, server := range Servers {
+		// TODO: Remove health check routine
 		if server.URL.String() == target.Url {
 			serverFound = true
 			Servers = append(Servers[:i], Servers[i+1:]...)
@@ -59,6 +63,17 @@ func deleteServer(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	} else {
 		w.WriteHeader(http.StatusNotFound)
+	}
+}
+
+func serverHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		createServer(w, r)
+	case http.MethodDelete:
+		deleteServer(w, r)
+	default:
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -85,9 +100,7 @@ func main() {
 		go HealthCheck(Servers[i], interval)
 	}
 
-	router := mux.NewRouter()
-	router.HandleFunc("/server", createServer).Methods("POST")
-	router.HandleFunc("/server", deleteServer).Methods("DELETE")
+	http.HandleFunc("/server", serverHandler)
 	http.HandleFunc("/", proxyHandler)
 
 	log.Println("Starting load balancer on port", config.Port)
