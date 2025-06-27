@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http/httputil"
 	"net/url"
 	"sync"
@@ -8,11 +9,12 @@ import (
 )
 
 type Server struct {
-	URL           *url.URL
-	IsHealthy     bool
-	Weight        int
-	CurrentWeight int
-	Mutex         sync.Mutex
+	URL             *url.URL
+	IsHealthy       bool
+	Weight          int
+	CurrentWeight   int
+	Mutex           sync.Mutex
+	stopHealthCheck context.CancelFunc
 }
 
 type ServerPayload struct {

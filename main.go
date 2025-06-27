@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -31,8 +32,11 @@ func createServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Add health check routine
 	Servers = append(Servers, server)
+	interval := getHealthCheckInterval(config.HealthCheckInterval)
+	ctx, cancel := context.WithCancel(context.Background())
+	go HealthCheck(ctx, server, interval)
+	server.stopHealthCheck = cancel
 	w.WriteHeader(http.StatusCreated)
 	encodeErr := json.NewEncoder(w).Encode(server)
 	if encodeErr != nil {
@@ -97,7 +101,9 @@ func main() {
 	interval := getHealthCheckInterval(config.HealthCheckInterval)
 
 	for i := 0; i < countOfServers; i++ {
-		go HealthCheck(Servers[i], interval)
+		ctx, cancel := context.WithCancel(context.Background())
+		go HealthCheck(ctx, Servers[i], interval)
+		Servers[i].stopHealthCheck = cancel
 	}
 
 	http.HandleFunc("/server", serverHandler)
