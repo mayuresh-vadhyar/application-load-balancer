@@ -20,6 +20,8 @@ type ServerPayload struct {
 	Weight int    `json:"weight"`
 }
 
+var interval time.Duration
+
 func CreateServer(rawUrl string) (*Server, error) {
 	parsedUrl, err := url.Parse(rawUrl)
 	if err != nil {
@@ -53,9 +55,13 @@ func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 }
 
 func getHealthCheckInterval(healthCheckInterval string) time.Duration {
-	interval, err := time.ParseDuration(healthCheckInterval)
-	if err != nil {
-		interval = (time.Second * 2)
-	}
+	once.Do(func() {
+		var err error
+		interval, err = time.ParseDuration(healthCheckInterval)
+		if err != nil {
+			interval = (time.Second * 2)
+		}
+	})
+
 	return interval
 }
