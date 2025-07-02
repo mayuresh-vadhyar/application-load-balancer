@@ -32,11 +32,12 @@ func createServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Servers = append(Servers, server)
 	interval := getHealthCheckInterval(config.HealthCheckInterval)
 	ctx, cancel := context.WithCancel(context.Background())
 	go HealthCheck(ctx, server, interval)
 	server.stopHealthCheck = cancel
+	Servers = append(Servers, server)
+
 	w.WriteHeader(http.StatusCreated)
 	encodeErr := json.NewEncoder(w).Encode(server)
 	if encodeErr != nil {
@@ -53,21 +54,17 @@ func deleteServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serverFound := false
 	for i, server := range Servers {
-		// TODO: Remove health check routine
 		if server.URL.String() == target.Url {
-			serverFound = true
+			server.stopHealthCheck()
 			Servers = append(Servers[:i], Servers[i+1:]...)
-			break
+			w.WriteHeader(http.StatusNoContent)
+			return
 		}
 	}
 
-	if serverFound {
-		w.WriteHeader(http.StatusNoContent)
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-	}
+	w.WriteHeader(http.StatusNotFound)
+
 }
 
 func serverHandler(w http.ResponseWriter, r *http.Request) {
