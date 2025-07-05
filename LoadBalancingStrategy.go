@@ -12,6 +12,21 @@ type LoadBalancingStrategy interface {
 	CreateServerList(Config) []*Server
 }
 
+func CreateServerList(config Config) []*Server {
+	var servers []*Server
+	serverUrls := config.Servers
+
+	for _, rawUrl := range serverUrls {
+		server, err := CreateServer(rawUrl)
+		if err != nil {
+			continue
+		}
+		servers = append(servers, server)
+	}
+
+	return servers
+}
+
 func GetLoadBalancingStrategy(algorithm string) LoadBalancingStrategy {
 	if algorithm == "" {
 		algorithm = constants.ROUND_ROBIN
