@@ -15,11 +15,11 @@ type Config struct {
 	Weights             []int    `json:"weights"`
 }
 
-var once sync.Once
+var configOnce sync.Once
 var config Config
 
 func GetConfig() Config {
-	once.Do(func() {
+	configOnce.Do(func() {
 		// Read file
 		data, err := ioutil.ReadFile("config.json")
 		if err != nil {

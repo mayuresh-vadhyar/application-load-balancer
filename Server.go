@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http/httputil"
 	"net/url"
 	"sync"
@@ -23,6 +24,7 @@ type ServerPayload struct {
 }
 
 var interval time.Duration
+var intervalOnce sync.Once
 
 func CreateServer(rawUrl string) (*Server, error) {
 	parsedUrl, err := url.Parse(rawUrl)
@@ -57,9 +59,10 @@ func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 }
 
 func getHealthCheckInterval(healthCheckInterval string) time.Duration {
-	once.Do(func() {
+	intervalOnce.Do(func() {
 		var err error
 		interval, err = time.ParseDuration(healthCheckInterval)
+		log.Printf("Ryt after conversion %v (%T)", interval, interval)
 		if err != nil {
 			interval = (time.Second * 2)
 		}
