@@ -11,18 +11,7 @@ type RoundRobinStrategy struct {
 }
 
 func (lbs *RoundRobinStrategy) CreateServerList(config Config) []*Server {
-	var servers []*Server
-	serverUrls := config.Servers
-
-	for _, rawUrl := range serverUrls {
-		server, err := CreateServer(rawUrl)
-		if err != nil {
-			continue
-		}
-		servers = append(servers, server)
-	}
-
-	return servers
+	return CreateServerList(config)
 }
 
 func (lbs *RoundRobinStrategy) GetNextServer(servers []*Server, _ *http.Request) *Server {

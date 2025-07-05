@@ -11,19 +11,7 @@ type URLHashStrategy struct {
 }
 
 func (lb *URLHashStrategy) CreateServerList(config Config) []*Server {
-	var servers []*Server
-	serverUrls := config.Servers
-
-	for _, rawUrl := range serverUrls {
-		server, err := CreateServer(rawUrl)
-		if err != nil {
-			continue
-		}
-		servers = append(servers, server)
-	}
-
-	return servers
-
+	return CreateServerList(config)
 }
 
 func (lb *URLHashStrategy) GetNextServer(servers []*Server, r *http.Request) *Server {

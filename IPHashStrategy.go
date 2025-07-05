@@ -13,19 +13,7 @@ type IPHashStrategy struct {
 }
 
 func (lb *IPHashStrategy) CreateServerList(config Config) []*Server {
-	var servers []*Server
-	serverUrls := config.Servers
-
-	for _, rawUrl := range serverUrls {
-		server, err := CreateServer(rawUrl)
-		if err != nil {
-			continue
-		}
-		servers = append(servers, server)
-	}
-
-	return servers
-
+	return CreateServerList(config)
 }
 
 func (lb *IPHashStrategy) GetNextServer(servers []*Server, r *http.Request) *Server {
