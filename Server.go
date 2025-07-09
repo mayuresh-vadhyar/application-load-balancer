@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http/httputil"
 	"net/url"
 	"sync"
@@ -32,10 +31,14 @@ func CreateServer(rawUrl string) (*Server, error) {
 		return nil, err
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
 	server := &Server{
-		URL:       parsedUrl,
-		IsHealthy: true,
+		URL:             parsedUrl,
+		IsHealthy:       true,
+		stopHealthCheck: cancel,
 	}
+	go StartHealthCheckRoutine(ctx, server, interval)
+
 	return server, nil
 }
 
@@ -45,12 +48,16 @@ func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
 		return nil, err
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
 	server := &Server{
-		URL:           parsedUrl,
-		Weight:        weight,
-		CurrentWeight: 0,
-		IsHealthy:     true,
+		URL:             parsedUrl,
+		Weight:          weight,
+		CurrentWeight:   0,
+		IsHealthy:       true,
+		stopHealthCheck: cancel,
 	}
+	go StartHealthCheckRoutine(ctx, server, interval)
+
 	return server, nil
 }
 
@@ -58,11 +65,10 @@ func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 	return httputil.NewSingleHostReverseProxy(s.URL)
 }
 
-func getHealthCheckInterval(healthCheckInterval string) time.Duration {
+func InitializeHealthCheckInterval(healthCheckInterval string) time.Duration {
 	intervalOnce.Do(func() {
 		var err error
 		interval, err = time.ParseDuration(healthCheckInterval)
-		log.Printf("Ryt after conversion %v (%T)", interval, interval)
 		if err != nil {
 			interval = (time.Second * 2)
 		}

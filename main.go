@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -32,10 +31,6 @@ func createServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	interval := getHealthCheckInterval(config.HealthCheckInterval)
-	ctx, cancel := context.WithCancel(context.Background())
-	go HealthCheck(ctx, server, interval)
-	server.stopHealthCheck = cancel
 	Servers = append(Servers, server)
 
 	w.WriteHeader(http.StatusCreated)
@@ -92,16 +87,8 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	config := GetConfig()
 	lb = GetLoadBalancingStrategy(config.Algorithm)
+	InitializeHealthCheckInterval(config.HealthCheckInterval)
 	Servers = lb.CreateServerList(config)
-
-	countOfServers := len(Servers)
-	interval := getHealthCheckInterval(config.HealthCheckInterval)
-
-	for i := 0; i < countOfServers; i++ {
-		ctx, cancel := context.WithCancel(context.Background())
-		go HealthCheck(ctx, Servers[i], interval)
-		Servers[i].stopHealthCheck = cancel
-	}
 
 	http.HandleFunc("/server", serverHandler)
 	http.HandleFunc("/", proxyHandler)

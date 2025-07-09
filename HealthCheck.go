@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func HealthCheck(ctx context.Context, s *Server, healthCheckInterval time.Duration) {
+func StartHealthCheckRoutine(ctx context.Context, s *Server, healthCheckInterval time.Duration) {
 	ticker := time.NewTicker(healthCheckInterval)
 	defer ticker.Stop()
 
