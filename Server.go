@@ -9,6 +9,7 @@ import (
 )
 
 type Server struct {
+	Id              int
 	URL             *url.URL
 	IsHealthy       bool
 	Weight          int
@@ -24,7 +25,17 @@ type ServerPayload struct {
 
 var interval time.Duration
 var intervalOnce sync.Once
+var idMutex sync.Mutex
+var lastId int = 0
 
+func getNextId() int {
+	idMutex.Lock()
+	defer idMutex.Unlock()
+	lastId++
+	return lastId
+}
+
+// TODO: Use constructor like function
 func CreateServer(rawUrl string) (*Server, error) {
 	parsedUrl, err := url.Parse(rawUrl)
 	if err != nil {
@@ -33,6 +44,7 @@ func CreateServer(rawUrl string) (*Server, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	server := &Server{
+		Id:              getNextId(),
 		URL:             parsedUrl,
 		IsHealthy:       true,
 		stopHealthCheck: cancel,
@@ -50,6 +62,7 @@ func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	server := &Server{
+		Id:              getNextId(),
 		URL:             parsedUrl,
 		Weight:          weight,
 		CurrentWeight:   0,
