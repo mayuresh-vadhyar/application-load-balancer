@@ -12,15 +12,23 @@ type ServerResponse struct {
 	Id      int    `json:"id"`
 }
 
+type ErrorResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
 var Servers []*Server
 var lb LoadBalancingStrategy
 
 func createServer(w http.ResponseWriter, r *http.Request) {
-	var newServer ServerPayload
-	decodeErr := json.NewDecoder(r.Body).Decode(&newServer)
 	w.Header().Set("Content-Type", "application/json")
-	if decodeErr != nil {
-		http.Error(w, decodeErr.Error(), http.StatusBadRequest)
+	var newServer ServerPayload
+	if decodeErr := json.NewDecoder(r.Body).Decode(&newServer); decodeErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Status:  "error",
+			Message: decodeErr.Error(),
+		})
 		return
 	}
 
@@ -33,31 +41,41 @@ func createServer(w http.ResponseWriter, r *http.Request) {
 
 	server, createErr := CreateServer(newServer.Url)
 	if createErr != nil {
-		http.Error(w, createErr.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Status:  "error",
+			Message: createErr.Error(),
+		})
 		return
 	}
 
 	Servers = append(Servers, server)
 
+	w.WriteHeader(http.StatusCreated)
 	response := ServerResponse{
 		Status:  "success",
 		Message: "Server added successfully",
 		Id:      server.Id,
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	encodeErr := json.NewEncoder(w).Encode(response)
-	if encodeErr != nil {
-		http.Error(w, encodeErr.Error(), http.StatusInternalServerError)
+	if encodeErr := json.NewEncoder(w).Encode(response); encodeErr != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Status:  "error",
+			Message: encodeErr.Error(),
+		})
 	}
 }
 
 func deleteServer(w http.ResponseWriter, r *http.Request) {
-	var target ServerPayload
-	decodeErr := json.NewDecoder(r.Body).Decode(&target)
 	w.Header().Set("Content-Type", "application/json")
-	if decodeErr != nil {
-		http.Error(w, decodeErr.Error(), http.StatusBadRequest)
+	var target ServerPayload
+	if decodeErr := json.NewDecoder(r.Body).Decode(&target); decodeErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Status:  "error",
+			Message: decodeErr.Error(),
+		})
 		return
 	}
 
