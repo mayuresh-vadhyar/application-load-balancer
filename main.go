@@ -16,36 +16,28 @@ var Servers []*Server
 var lb LoadBalancingStrategy
 
 func createServer(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	var newServer ServerPayload
 	if decodeErr := json.NewDecoder(r.Body).Decode(&newServer); decodeErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ErrorResponse{
-			Status:  "error",
-			Message: decodeErr.Error(),
-		})
+		WriteErrorResponse(w, http.StatusBadRequest, decodeErr.Error())
 		return
 	}
 
 	for _, server := range Servers {
 		if server.URL.String() == newServer.Url {
-			http.Error(w, "Server already registered", http.StatusFound)
+			WriteErrorResponse(w, http.StatusFound, "Server already registered")
 			return
 		}
 	}
 
 	server, createErr := CreateServer(newServer.Url)
 	if createErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ErrorResponse{
-			Status:  "error",
-			Message: createErr.Error(),
-		})
+		WriteErrorResponse(w, http.StatusBadRequest, createErr.Error())
 		return
 	}
 
 	Servers = append(Servers, server)
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	response := ServerResponse{
 		Status:  "success",
@@ -54,25 +46,19 @@ func createServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if encodeErr := json.NewEncoder(w).Encode(response); encodeErr != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ErrorResponse{
-			Status:  "error",
-			Message: encodeErr.Error(),
-		})
+		WriteErrorResponse(w, http.StatusInternalServerError, encodeErr.Error())
 	}
 }
 
 func deleteServer(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	var target ServerPayload
 	if decodeErr := json.NewDecoder(r.Body).Decode(&target); decodeErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ErrorResponse{
-			Status:  "error",
-			Message: decodeErr.Error(),
-		})
+		WriteErrorResponse(w, http.StatusBadRequest, decodeErr.Error())
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
 
 	for i, server := range Servers {
 		if server.URL.String() == target.Url {
@@ -82,9 +68,6 @@ func deleteServer(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
-	w.WriteHeader(http.StatusNotFound)
-
 }
 
 func serverHandler(w http.ResponseWriter, r *http.Request) {
