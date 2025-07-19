@@ -12,11 +12,6 @@ type ServerResponse struct {
 	Id      int    `json:"id"`
 }
 
-type ErrorResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-}
-
 var Servers []*Server
 var lb LoadBalancingStrategy
 
