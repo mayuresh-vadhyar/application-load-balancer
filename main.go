@@ -6,12 +6,6 @@ import (
 	"net/http"
 )
 
-type ServerResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-	Id      int    `json:"id"`
-}
-
 var Servers []*Server
 var lb LoadBalancingStrategy
 
@@ -36,18 +30,7 @@ func createServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	Servers = append(Servers, server)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	response := ServerResponse{
-		Status:  "success",
-		Message: "Server added successfully",
-		Id:      server.Id,
-	}
-
-	if encodeErr := json.NewEncoder(w).Encode(response); encodeErr != nil {
-		WriteErrorResponse(w, http.StatusInternalServerError, encodeErr.Error())
-	}
+	WriteSuccessResponse(w, http.StatusCreated, server)
 }
 
 func deleteServer(w http.ResponseWriter, r *http.Request) {
