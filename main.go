@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"slices"
 )
 
 var Servers []*Server
@@ -41,16 +42,15 @@ func deleteServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotFound)
-
 	for i, server := range Servers {
 		if server.URL.String() == target.Url {
 			server.stopHealthCheck()
-			Servers = append(Servers[:i], Servers[i+1:]...)
+			Servers = slices.Delete(Servers, i, i+1)
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 	}
+	w.WriteHeader(http.StatusNotFound)
 }
 
 func serverHandler(w http.ResponseWriter, r *http.Request) {
