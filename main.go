@@ -60,14 +60,14 @@ func serverHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		deleteServer(w, r)
 	default:
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		WriteErrorResponse(w, http.StatusMethodNotAllowed, "Method Not Allowed")
 	}
 }
 
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	server := lb.GetNextServer(Servers, r)
 	if server == nil {
-		http.Error(w, "No healthy server available", http.StatusServiceUnavailable)
+		WriteErrorResponse(w, http.StatusServiceUnavailable, "No healthy server available")
 		return
 	}
 
