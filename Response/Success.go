@@ -1,9 +1,13 @@
-package main
+package Response
 
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/mayuresh-vadhyar/application-load-balancer/server"
 )
+
+type Server = server.Server
 
 type ServerResponse struct {
 	Status  string    `json:"status"`
