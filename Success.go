@@ -6,13 +6,13 @@ import (
 )
 
 type ServerResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-	Id      int    `json:"id"`
+	Status  string    `json:"status"`
+	Message string    `json:"message"`
+	Id      int       `json:"id"`
+	Data    []*Server `json:"data"`
 }
 
 func WriteSuccessResponse(w http.ResponseWriter, status int, server *Server) {
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	response := ServerResponse{

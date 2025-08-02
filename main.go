@@ -10,6 +10,18 @@ import (
 var Servers []*Server
 var lb LoadBalancingStrategy
 
+func getServer(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	response := ServerResponse{
+		Status: "success",
+		Data:   Servers,
+	}
+	if encodeErr := json.NewEncoder(w).Encode(response); encodeErr != nil {
+		WriteErrorResponse(w, http.StatusInternalServerError, encodeErr.Error())
+	}
+}
+
 func createServer(w http.ResponseWriter, r *http.Request) {
 	var newServer ServerPayload
 	if decodeErr := json.NewDecoder(r.Body).Decode(&newServer); decodeErr != nil {
@@ -55,6 +67,8 @@ func deleteServer(w http.ResponseWriter, r *http.Request) {
 
 func serverHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
+	case http.MethodGet:
+		getServer(w, r)
 	case http.MethodPost:
 		createServer(w, r)
 	case http.MethodDelete:
