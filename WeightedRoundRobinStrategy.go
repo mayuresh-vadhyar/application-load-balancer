@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 	"sync"
+
+	"github.com/mayuresh-vadhyar/application-load-balancer/server"
 )
 
 type WeightedRoundRobinStrategy struct {
@@ -24,7 +26,7 @@ func (lb *WeightedRoundRobinStrategy) CreateServerList(config Config) []*Server 
 		}
 	}
 	for i := 0; i < countOfServers; i++ {
-		server, err := CreateWeightedServer(serverUrls[i], weights[i])
+		server, err := server.CreateWeightedServer(serverUrls[i], weights[i])
 		if err != nil {
 			continue
 		}

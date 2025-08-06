@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/mayuresh-vadhyar/application-load-balancer/constants"
+	"github.com/mayuresh-vadhyar/application-load-balancer/server"
 )
 
 type LoadBalancingStrategy interface {
@@ -17,7 +18,7 @@ func CreateServerList(config Config) []*Server {
 	serverUrls := config.Servers
 
 	for _, rawUrl := range serverUrls {
-		server, err := CreateServer(rawUrl)
+		server, err := server.CreateServer(rawUrl)
 		if err != nil {
 			continue
 		}

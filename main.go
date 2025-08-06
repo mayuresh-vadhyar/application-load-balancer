@@ -5,58 +5,63 @@ import (
 	"log"
 	"net/http"
 	"slices"
+
+	"github.com/mayuresh-vadhyar/application-load-balancer/Response"
+	"github.com/mayuresh-vadhyar/application-load-balancer/server"
 )
 
-var Servers []*Server
+type Server = server.Server
+
+var Servers []*server.Server
 var lb LoadBalancingStrategy
 
 func getServer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	response := ServerResponse{
+	response := Response.ServerResponse{
 		Status: "success",
 		Data:   Servers,
 	}
 	if encodeErr := json.NewEncoder(w).Encode(response); encodeErr != nil {
-		WriteErrorResponse(w, http.StatusInternalServerError, encodeErr.Error())
+		Response.WriteErrorResponse(w, http.StatusInternalServerError, encodeErr.Error())
 	}
 }
 
 func createServer(w http.ResponseWriter, r *http.Request) {
-	var newServer ServerPayload
+	var newServer server.ServerPayload
 	if decodeErr := json.NewDecoder(r.Body).Decode(&newServer); decodeErr != nil {
-		WriteErrorResponse(w, http.StatusBadRequest, decodeErr.Error())
+		Response.WriteErrorResponse(w, http.StatusBadRequest, decodeErr.Error())
 		return
 	}
 
 	for _, server := range Servers {
 		if server.URL.String() == newServer.Url {
-			WriteErrorResponse(w, http.StatusFound, "Server already registered")
+			Response.WriteErrorResponse(w, http.StatusFound, "Server already registered")
 			return
 		}
 	}
 
-	server, createErr := CreateServer(newServer.Url)
+	server, createErr := server.CreateServer(newServer.Url)
 	if createErr != nil {
-		WriteErrorResponse(w, http.StatusBadRequest, createErr.Error())
+		Response.WriteErrorResponse(w, http.StatusBadRequest, createErr.Error())
 		return
 	}
 
 	Servers = append(Servers, server)
-	WriteSuccessResponse(w, http.StatusCreated, server)
+	Response.WriteSuccessResponse(w, http.StatusCreated, server)
 }
 
 func deleteServer(w http.ResponseWriter, r *http.Request) {
-	var target ServerPayload
+	var target server.ServerPayload
 	if decodeErr := json.NewDecoder(r.Body).Decode(&target); decodeErr != nil {
-		WriteErrorResponse(w, http.StatusBadRequest, decodeErr.Error())
+		Response.WriteErrorResponse(w, http.StatusBadRequest, decodeErr.Error())
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	for i, server := range Servers {
 		if server.URL.String() == target.Url {
-			server.stopHealthCheck()
+			server.StopHealthCheck()
 			Servers = slices.Delete(Servers, i, i+1)
 			w.WriteHeader(http.StatusNoContent)
 			return
@@ -74,14 +79,14 @@ func serverHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		deleteServer(w, r)
 	default:
-		WriteErrorResponse(w, http.StatusMethodNotAllowed, "Method Not Allowed")
+		Response.WriteErrorResponse(w, http.StatusMethodNotAllowed, "Method Not Allowed")
 	}
 }
 
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	server := lb.GetNextServer(Servers, r)
 	if server == nil {
-		WriteErrorResponse(w, http.StatusServiceUnavailable, "No healthy server available")
+		Response.WriteErrorResponse(w, http.StatusServiceUnavailable, "No healthy server available")
 		return
 	}
 
@@ -92,7 +97,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	config := GetConfig()
 	lb = GetLoadBalancingStrategy(config.Algorithm)
-	InitializeHealthCheckInterval(config.HealthCheckInterval)
+	server.InitializeHealthCheckInterval(config.HealthCheckInterval)
 	Servers = lb.CreateServerList(config)
 
 	http.HandleFunc("/server", serverHandler)
