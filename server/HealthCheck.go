@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -21,6 +21,7 @@ func StartHealthCheckRoutine(ctx context.Context, s *Server, healthCheckInterval
 		case <-ticker.C:
 			res, err := http.Head(s.URL.String())
 			s.Mutex.Lock()
+			// TODO: Remove server if unhealthy
 			if err == nil && res.StatusCode == http.StatusOK {
 				s.IsHealthy = true
 			} else {
