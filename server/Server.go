@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -15,7 +15,7 @@ type Server struct {
 	Weight          int
 	CurrentWeight   int
 	Mutex           sync.Mutex
-	stopHealthCheck context.CancelFunc
+	StopHealthCheck context.CancelFunc
 }
 
 type ServerPayload struct {
@@ -35,7 +35,6 @@ func getNextId() int {
 	return lastId
 }
 
-// TODO: Use constructor like function
 func CreateServer(rawUrl string) (*Server, error) {
 	parsedUrl, err := url.Parse(rawUrl)
 	if err != nil {
@@ -47,7 +46,7 @@ func CreateServer(rawUrl string) (*Server, error) {
 		Id:              getNextId(),
 		URL:             parsedUrl,
 		IsHealthy:       true,
-		stopHealthCheck: cancel,
+		StopHealthCheck: cancel,
 	}
 	go StartHealthCheckRoutine(ctx, server, interval)
 
@@ -67,7 +66,7 @@ func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
 		Weight:          weight,
 		CurrentWeight:   0,
 		IsHealthy:       true,
-		stopHealthCheck: cancel,
+		StopHealthCheck: cancel,
 	}
 	go StartHealthCheckRoutine(ctx, server, interval)
 
