@@ -12,7 +12,6 @@ import (
 
 type Server = server.Server
 
-var Servers []*server.Server
 var lb LoadBalancingStrategy
 
 func getServer(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +19,7 @@ func getServer(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	response := Response.ServerResponse{
 		Status: "success",
-		Data:   Servers,
+		Data:   server.Servers,
 	}
 	if encodeErr := json.NewEncoder(w).Encode(response); encodeErr != nil {
 		Response.WriteErrorResponse(w, http.StatusInternalServerError, encodeErr.Error())
@@ -34,21 +33,21 @@ func createServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, server := range Servers {
-		if server.URL.String() == newServer.Url {
+	for _, item := range server.Servers {
+		if item.URL.String() == newServer.Url {
 			Response.WriteErrorResponse(w, http.StatusFound, "Server already registered")
 			return
 		}
 	}
 
-	server, createErr := server.CreateServer(newServer.Url)
+	item, createErr := server.CreateServer(newServer.Url)
 	if createErr != nil {
 		Response.WriteErrorResponse(w, http.StatusBadRequest, createErr.Error())
 		return
 	}
 
-	Servers = append(Servers, server)
-	Response.WriteSuccessResponse(w, http.StatusCreated, server)
+	server.Servers = append(server.Servers, item)
+	Response.WriteSuccessResponse(w, http.StatusCreated, item)
 }
 
 func deleteServer(w http.ResponseWriter, r *http.Request) {
@@ -59,10 +58,10 @@ func deleteServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	for i, server := range Servers {
-		if server.URL.String() == target.Url {
-			server.StopHealthCheck()
-			Servers = slices.Delete(Servers, i, i+1)
+	for i, item := range server.Servers {
+		if item.URL.String() == target.Url {
+			item.StopHealthCheck()
+			server.Servers = slices.Delete(server.Servers, i, i+1)
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
@@ -84,7 +83,7 @@ func serverHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
-	server := lb.GetNextServer(Servers, r)
+	server := lb.GetNextServer(server.Servers, r)
 	if server == nil {
 		Response.WriteErrorResponse(w, http.StatusServiceUnavailable, "No healthy server available")
 		return
@@ -98,7 +97,7 @@ func main() {
 	config := GetConfig()
 	lb = GetLoadBalancingStrategy(config.Algorithm)
 	server.InitializeHealthCheckInterval(config.HealthCheckInterval)
-	Servers = lb.CreateServerList(config)
+	server.Servers = lb.CreateServerList(config)
 
 	http.HandleFunc("/server", serverHandler)
 	http.HandleFunc("/", proxyHandler)
