@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http/httputil"
 	"net/url"
+	"slices"
 	"sync"
 	"time"
 )
@@ -23,6 +24,7 @@ type ServerPayload struct {
 	Weight int    `json:"weight"`
 }
 
+var Servers []*Server
 var interval time.Duration
 var intervalOnce sync.Once
 var idMutex sync.Mutex
@@ -51,6 +53,17 @@ func CreateServer(rawUrl string) (*Server, error) {
 	go StartHealthCheckRoutine(ctx, server, interval)
 
 	return server, nil
+}
+
+func DeleteServer(targetUrl string) bool {
+	for i, item := range Servers {
+		if item.URL.String() == targetUrl {
+			item.StopHealthCheck()
+			Servers = slices.Delete(Servers, i, i+1)
+			return true
+		}
+	}
+	return false
 }
 
 func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
