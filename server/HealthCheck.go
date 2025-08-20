@@ -21,12 +21,17 @@ func StartHealthCheckRoutine(ctx context.Context, s *Server, healthCheckInterval
 		case <-ticker.C:
 			res, err := http.Head(s.URL.String())
 			s.Mutex.Lock()
-			// TODO: Remove server if unhealthy
 			if err == nil && res.StatusCode == http.StatusOK {
 				s.IsHealthy = true
+				s.UnhealthyChecks = 0
 			} else {
 				fmt.Printf("%s is down\n", s.URL)
-				s.IsHealthy = false
+				s.UnhealthyChecks++
+				if s.UnhealthyChecks >= 5 {
+					DeleteServer(s.URL.String())
+				} else {
+					s.IsHealthy = false
+				}
 			}
 			s.Mutex.Unlock()
 		}

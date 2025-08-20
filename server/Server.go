@@ -17,6 +17,7 @@ type Server struct {
 	CurrentWeight   int
 	Mutex           sync.Mutex
 	StopHealthCheck context.CancelFunc
+	UnhealthyChecks int
 }
 
 type ServerPayload struct {
