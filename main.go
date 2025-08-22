@@ -93,6 +93,7 @@ func main() {
 	config := GetConfig()
 	lb = GetLoadBalancingStrategy(config.Algorithm)
 	server.InitializeHealthCheckInterval(config.HealthCheckInterval)
+	server.InitializeMaxUnhealthyChecks(config.MaxUnhealthyChecks)
 	server.Servers = lb.CreateServerList(config)
 
 	http.HandleFunc("/server", serverHandler)

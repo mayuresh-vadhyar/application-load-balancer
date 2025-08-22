@@ -28,6 +28,7 @@ type ServerPayload struct {
 var Servers []*Server
 var interval time.Duration
 var intervalOnce sync.Once
+var maxUnhealthyChecks int8 = -1
 var idMutex sync.Mutex
 var lastId int = 0
 
@@ -101,4 +102,10 @@ func InitializeHealthCheckInterval(healthCheckInterval string) time.Duration {
 	})
 
 	return interval
+}
+
+func InitializeMaxUnhealthyChecks(count int8) {
+	if count > 0 {
+		maxUnhealthyChecks = count
+	}
 }
