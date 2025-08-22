@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"slices"
 
 	"github.com/mayuresh-vadhyar/application-load-balancer/Response"
 	"github.com/mayuresh-vadhyar/application-load-balancer/server"
@@ -58,13 +57,10 @@ func deleteServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	for i, item := range server.Servers {
-		if item.URL.String() == target.Url {
-			item.StopHealthCheck()
-			server.Servers = slices.Delete(server.Servers, i, i+1)
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+	found := server.DeleteServer(target.Url)
+	if found {
+		w.WriteHeader(http.StatusNoContent)
+		return
 	}
 	w.WriteHeader(http.StatusNotFound)
 }
