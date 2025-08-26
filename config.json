@@ -2,6 +2,7 @@
   "Algorithm" : "WRR",
   "Port": ":5000",
   "HealthCheckInterval": "2s",
+  "MaxUnhealthyChecks": 3,
   "Servers": [
     "http://localhost:5001",
     "http://localhost:5002",
