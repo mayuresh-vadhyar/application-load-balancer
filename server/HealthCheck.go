@@ -26,10 +26,10 @@ func StartHealthCheckRoutine(ctx context.Context, s *Server, healthCheckInterval
 				s.UnhealthyChecks = 0
 			} else {
 				fmt.Printf("%s is down\n", s.URL)
-				s.UnhealthyChecks++
-				if s.UnhealthyChecks >= 5 {
+				if maxUnhealthyChecks > 0 && s.UnhealthyChecks+1 >= maxUnhealthyChecks {
 					DeleteServer(s.URL.String())
 				} else {
+					s.UnhealthyChecks++
 					s.IsHealthy = false
 				}
 			}
