@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"net/http/httputil"
 	"net/url"
 	"slices"
@@ -10,14 +11,25 @@ import (
 )
 
 type Server struct {
-	Id              int
-	URL             *url.URL
-	IsHealthy       bool
-	Weight          int
-	CurrentWeight   int
-	Mutex           sync.Mutex
-	StopHealthCheck context.CancelFunc
-	UnhealthyChecks int
+	Id              int                `json:"id"`
+	URL             *url.URL           `json:"-"`
+	IsHealthy       bool               `json:"isHealthy"`
+	Weight          int                `json:"weight,omitempty"`
+	CurrentWeight   int                `json:"-"`
+	Mutex           sync.Mutex         `json:"-"`
+	StopHealthCheck context.CancelFunc `json:"-"`
+	UnhealthyChecks int8               `json:"unhealthyCHecks"`
+}
+
+func (m Server) MarshalJSON() ([]byte, error) {
+	type Alias Server
+	return json.Marshal(&struct {
+		Alias
+		URL string `json:"url"`
+	}{
+		Alias: (Alias)(m),
+		URL:   m.URL.Host,
+	})
 }
 
 type ServerPayload struct {
