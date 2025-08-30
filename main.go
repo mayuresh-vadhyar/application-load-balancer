@@ -14,15 +14,8 @@ type Server = server.Server
 var lb LoadBalancingStrategy
 
 func getServer(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	response := Response.ServerResponse{
-		Status: "success",
-		Data:   server.Servers,
-	}
-	if encodeErr := json.NewEncoder(w).Encode(response); encodeErr != nil {
-		Response.WriteErrorResponse(w, http.StatusInternalServerError, encodeErr.Error())
-	}
+	servers := server.Servers
+	Response.WriteSuccessResponseArray(w, http.StatusOK, servers)
 }
 
 func createServer(w http.ResponseWriter, r *http.Request) {
