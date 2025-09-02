@@ -14,8 +14,31 @@ type Server = server.Server
 var lb LoadBalancingStrategy
 
 func getServer(w http.ResponseWriter, r *http.Request) {
-	servers := server.Servers
-	Response.WriteSuccessResponseArray(w, http.StatusOK, servers)
+	filteredServers := []*Server{}
+	query := r.URL.Query()
+	isHealthyParam := query.Get("isHealthy")
+	urlParam := query.Get("urlParam")
+
+	for _, s := range server.Servers {
+		match := true
+
+		if isHealthyParam != "" {
+			wantHealthy := isHealthyParam == "true"
+			if s.IsHealthy != wantHealthy {
+				match = false
+			}
+		}
+
+		if urlParam != "" && s.URL.String() != urlParam {
+			match = false
+		}
+
+		if match {
+			filteredServers = append(filteredServers, s)
+		}
+	}
+
+	Response.WriteSuccessResponseArray(w, http.StatusOK, filteredServers)
 }
 
 func createServer(w http.ResponseWriter, r *http.Request) {
