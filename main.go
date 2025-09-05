@@ -113,7 +113,7 @@ func main() {
 	server.Servers = lb.CreateServerList(config)
 
 	http.HandleFunc("/server", serverHandler)
-	http.HandleFunc("/", proxyHandler)
+	http.Handle("/", loggingMiddleware(http.HandlerFunc(proxyHandler)))
 
 	log.Println("Starting load balancer on port", config.Port)
 	err := http.ListenAndServe(config.Port, nil)

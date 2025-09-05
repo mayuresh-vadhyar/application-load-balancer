@@ -18,7 +18,7 @@ type Server struct {
 	CurrentWeight   int                `json:"-"`
 	Mutex           sync.Mutex         `json:"-"`
 	StopHealthCheck context.CancelFunc `json:"-"`
-	UnhealthyChecks int8               `json:"unhealthyCHecks"`
+	UnhealthyChecks int8               `json:"unhealthyChecks"`
 }
 
 func (m Server) MarshalJSON() ([]byte, error) {
