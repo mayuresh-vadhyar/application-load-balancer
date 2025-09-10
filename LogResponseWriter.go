@@ -17,12 +17,12 @@ func (lrw *LogResponseWriter) WriteHeader(code int) {
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
-func (lrw *LogResponseWriter) Write(b []byte) {
+func (lrw *LogResponseWriter) Write(b []byte) (int, error) {
 	if lrw.statusCode == 0 {
 		lrw.statusCode = http.StatusOK
 	}
 
-	size, err = lrw.ResponseWriter.Write(b)
+	size, err := lrw.ResponseWriter.Write(b)
 	lrw.size += size
 	return size, err
 }
@@ -30,8 +30,8 @@ func (lrw *LogResponseWriter) Write(b []byte) {
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		lrw := &loggingResponseWriter{ResponseWriter: w}
-		next.ServeHTTP()
+		lrw := &LogResponseWriter{ResponseWriter: w}
+		next.ServeHTTP(w, r)
 		duration := time.Since(start)
 		target := w.Header().Get("X-Forwarded-Server")
 		log.Printf("[%s] %s %s -> server: %s | status: %d | TAT: %v | size: %dB",
