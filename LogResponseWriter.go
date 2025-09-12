@@ -7,9 +7,9 @@ import (
 )
 
 type LogResponseWriter struct {
-	ResponseWriter http.ResponseWriter
-	statusCode     int
-	size           int
+	http.ResponseWriter
+	statusCode int
+	size       int
 }
 
 func (lrw *LogResponseWriter) WriteHeader(code int) {
@@ -31,7 +31,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		lrw := &LogResponseWriter{ResponseWriter: w}
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(lrw, r)
 		duration := time.Since(start)
 		target := w.Header().Get("X-Forwarded-Server")
 		log.Printf("[%s] %s %s -> server: %s | status: %d | TAT: %v | size: %dB",
