@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -94,6 +96,21 @@ func serverHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func generateHash() (string, error) {
+	hashLength := 12
+	randomBytes := make([]byte, hashLength)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+
+	hash := base64.RawURLEncoding.EncodeToString(randomBytes)
+	if len(hash) > hashLength {
+		hash = hash[:hashLength]
+	}
+	return hash, nil
+}
+
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	server := lb.GetNextServer(server.Servers, r)
 	if server == nil {
@@ -101,6 +118,9 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	hash, _ := generateHash()
+	r.Header.Add("tracking-id", hash)
+	w.Header().Add("tracking-id", hash)
 	w.Header().Add("X-Forwarded-Server", server.URL.String())
 	server.ReverseProxy().ServeHTTP(w, r)
 }
