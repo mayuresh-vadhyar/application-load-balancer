@@ -12,6 +12,8 @@ type LogResponseWriter struct {
 	size       int
 }
 
+var disableLogs bool
+
 func (lrw *LogResponseWriter) WriteHeader(code int) {
 	lrw.statusCode = code
 	lrw.ResponseWriter.WriteHeader(code)
@@ -25,6 +27,10 @@ func (lrw *LogResponseWriter) Write(b []byte) (int, error) {
 	size, err := lrw.ResponseWriter.Write(b)
 	lrw.size += size
 	return size, err
+}
+
+func InitializeLogResponseWriter(disable bool) {
+	disableLogs = disable
 }
 
 func loggingMiddleware(next http.Handler) http.Handler {

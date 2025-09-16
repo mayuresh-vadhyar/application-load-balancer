@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Algorithm           string   `json:"algorithm"`
 	Port                string   `json:"port"`
+	DisableLogs         bool     `json:"disableLogs"`
 	HealthCheckInterval string   `json:"healthCheckInterval"`
 	MaxUnhealthyChecks  int8     `json:"maxUnhealthyChecks"`
 	Servers             []string `json:"servers"`
