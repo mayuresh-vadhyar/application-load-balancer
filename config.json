@@ -8,5 +8,6 @@
     "http://localhost:5002",
     "http://localhost:5003"
   ],
+  "DisableLogs": false,
   "Weights": [1,2,1]
 }

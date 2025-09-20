@@ -128,6 +128,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	config := GetConfig()
 	lb = GetLoadBalancingStrategy(config.Algorithm)
+	InitializeLogResponseWriter(config.DisableLogs)
 	server.InitializeHealthCheckInterval(config.HealthCheckInterval)
 	server.InitializeMaxUnhealthyChecks(config.MaxUnhealthyChecks)
 	server.Servers = lb.CreateServerList(config)

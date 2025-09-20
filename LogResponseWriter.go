@@ -34,6 +34,13 @@ func InitializeLogResponseWriter(disable bool) {
 }
 
 func loggingMiddleware(next http.Handler) http.Handler {
+	if disableLogs {
+		return next
+	}
+	return requestLogger(next)
+}
+
+func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		lrw := &LogResponseWriter{ResponseWriter: w}
