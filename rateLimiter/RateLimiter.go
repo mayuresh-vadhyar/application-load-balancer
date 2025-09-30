@@ -51,4 +51,19 @@ func (rl RateLimiter) allowRequest(key string) (bool, error) {
 	return true, nil
 }
 
-func (rl RateLimiter) RateLimit(next http.Handler) http.Handler {}
+func (rl RateLimiter) RateLimit(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip := r.RemoteAddr
+		key := keyGenerator(ip)
+		allowed, err := rl.allowRequest(key)
+
+		if err != nil {
+			http.Error(w, "Rate Limit Error", http.StatusInternalServerError)
+			return
+		}
+
+		if !allowed {
+			http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
+		}
+	})
+}
