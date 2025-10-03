@@ -35,16 +35,19 @@ func keyGenerator(token string) string {
 }
 
 func (rl RateLimiter) allowRequest(key string) (bool, error) {
-	pipe := rl.client.TxPipeline()
-	incr := pipe.Incr(ctx, key)
-	pipe.Expire(ctx, key, rl.window)
-
-	_, err := pipe.Exec(ctx)
+	count, err := rl.client.Incr(ctx, key).Result()
 	if err != nil {
 		return false, err
 	}
 
-	if incr.Val() > int64(rl.limit) {
+	if count == 1 {
+		_, err = rl.client.Expire(ctx, key, rl.window).Result()
+		if err != nil {
+			return false, err
+		}
+	}
+
+	if count > int64(rl.limit) {
 		return false, nil
 	}
 
