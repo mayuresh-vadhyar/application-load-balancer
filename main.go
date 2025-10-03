@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/mayuresh-vadhyar/application-load-balancer/Response"
+	"github.com/mayuresh-vadhyar/application-load-balancer/rateLimiter"
 	"github.com/mayuresh-vadhyar/application-load-balancer/server"
 )
 
@@ -132,12 +134,14 @@ func main() {
 	server.InitializeHealthCheckInterval(config.HealthCheckInterval)
 	server.InitializeMaxUnhealthyChecks(config.MaxUnhealthyChecks)
 	server.Servers = lb.CreateServerList(config)
+	rl := rateLimiter.InitializeRateLimiter("localhost:6379", 10, 30*time.Second)
 
+	mux := http.NewServeMux()
 	http.HandleFunc("/server", serverHandler)
-	http.Handle("/", loggingMiddleware(http.HandlerFunc(proxyHandler)))
+	mux.Handle("/", loggingMiddleware(http.HandlerFunc(proxyHandler)))
 
 	log.Println("Starting load balancer on port", config.Port)
-	err := http.ListenAndServe(config.Port, nil)
+	err := http.ListenAndServe(config.Port, rl.RateLimit(mux))
 	if err != nil {
 		log.Fatalf("Error starting load balancer: %s\n", err.Error())
 	}

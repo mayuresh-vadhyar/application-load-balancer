@@ -68,5 +68,6 @@ func (rl RateLimiter) RateLimit(next http.Handler) http.Handler {
 		if !allowed {
 			http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
 		}
+		next.ServeHTTP(w, r)
 	})
 }
