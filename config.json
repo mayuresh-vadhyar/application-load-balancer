@@ -9,5 +9,10 @@
     "http://localhost:5003"
   ],
   "DisableLogs": false,
-  "Weights": [1,2,1]
+  "Weights": [1,2,1],
+  "RedisURL":"localhost:6379",
+  "RateLimit": {
+    "Limit": 10,
+    "Window": "1m"
+  }
 }

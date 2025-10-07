@@ -5,7 +5,13 @@ import (
 	"io/ioutil"
 	"log"
 	"sync"
+	"time"
 )
+
+type RateLimitConfig struct {
+	Limit  int           `json:"limit"`
+	Window time.Duration `json:"window"`
+}
 
 type Config struct {
 	Algorithm           string   `json:"algorithm"`
@@ -15,6 +21,8 @@ type Config struct {
 	MaxUnhealthyChecks  int8     `json:"maxUnhealthyChecks"`
 	Servers             []string `json:"servers"`
 	Weights             []int    `json:"weights"`
+	RateLimit           RateLimitConfig
+	RedisURL            string `json:"redis"`
 }
 
 var configOnce sync.Once
