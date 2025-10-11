@@ -18,12 +18,24 @@ type RateLimiter struct {
 var ctx = context.Background()
 var prefix = "_ratelimiter"
 
-func InitializeRateLimiter(addr string, limit int, window time.Duration) *RateLimiter {
-	redisClient := redis.NewClient(&redis.Options{
+func InitializeRateLimiter(addr string, limit int, rlWindow string) *RateLimiter {
+	if addr == "" {
+		return nil
+	}
+
+	window, err := time.ParseDuration(rlWindow)
+	if err != nil {
+		window = (time.Minute * 2)
+	}
+	if limit == 0 {
+		limit = 25
+	}
+
+	client := redis.NewClient(&redis.Options{
 		Addr: addr,
 	})
 	return &RateLimiter{
-		client: redisClient,
+		client: client,
 		limit:  limit,
 		window: window,
 	}

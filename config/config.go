@@ -5,14 +5,14 @@ import (
 	"io/ioutil"
 	"log"
 	"sync"
-	"time"
 )
 
 type RateLimitConfig struct {
-	Limit  int           `json:"limit"`
-	Window time.Duration `json:"window"`
+	Limit  int    `json:"limit"`
+	Window string `json:"window"`
 }
 
+// TODO: Add cooldown to resume checks
 type Config struct {
 	Algorithm           string   `json:"algorithm"`
 	Port                string   `json:"port"`
