@@ -4,9 +4,12 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/mayuresh-vadhyar/application-load-balancer/config"
 	"github.com/mayuresh-vadhyar/application-load-balancer/constants"
 	"github.com/mayuresh-vadhyar/application-load-balancer/server"
 )
+
+type Config = config.Config
 
 type LoadBalancingStrategy interface {
 	GetNextServer(servers []*Server, r *http.Request) *Server

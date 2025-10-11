@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/mayuresh-vadhyar/application-load-balancer/Response"
+	"github.com/mayuresh-vadhyar/application-load-balancer/config"
 	"github.com/mayuresh-vadhyar/application-load-balancer/rateLimiter"
 	"github.com/mayuresh-vadhyar/application-load-balancer/server"
 )
@@ -127,7 +128,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	config := GetConfig()
+	config := config.GetConfig()
 	lb = GetLoadBalancingStrategy(config.Algorithm)
 	InitializeLogResponseWriter(config.DisableLogs)
 	server.InitializeHealthCheckInterval(config.HealthCheckInterval)
