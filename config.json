@@ -12,6 +12,7 @@
   "Weights": [1,2,1],
   "RedisURL":"localhost:6379",
   "RateLimit": {
+    "Enable": true,
     "Limit": 10,
     "Window": "1m"
   }

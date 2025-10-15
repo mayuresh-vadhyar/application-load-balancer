@@ -23,7 +23,7 @@ var prefix = "_ratelimiter"
 
 func InitializeRateLimiter() *RateLimiter {
 	config := config.GetConfig()
-	if config.RedisURL == "" {
+	if config.RedisURL == "" || !config.RateLimit.Enable {
 		return nil
 	}
 	window, err := time.ParseDuration(config.RateLimit.Window)

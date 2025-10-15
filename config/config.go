@@ -8,6 +8,7 @@ import (
 )
 
 type RateLimitConfig struct {
+	Enable bool   `json:"enable"`
 	Limit  int    `json:"limit"`
 	Window string `json:"window"`
 }
