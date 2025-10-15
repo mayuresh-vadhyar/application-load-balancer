@@ -6,8 +6,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mayuresh-vadhyar/application-load-balancer/config"
 	"github.com/redis/go-redis/v9"
 )
+
+type Config = config.Config
 
 type RateLimiter struct {
 	client *redis.Client
@@ -18,21 +21,23 @@ type RateLimiter struct {
 var ctx = context.Background()
 var prefix = "_ratelimiter"
 
-func InitializeRateLimiter(addr string, limit int, rlWindow string) *RateLimiter {
-	if addr == "" {
+func InitializeRateLimiter() *RateLimiter {
+	config := config.GetConfig()
+	if config.RedisURL == "" {
 		return nil
 	}
-
-	window, err := time.ParseDuration(rlWindow)
+	window, err := time.ParseDuration(config.RateLimit.Window)
 	if err != nil {
 		window = (time.Minute * 2)
 	}
+
+	limit := config.RateLimit.Limit
 	if limit == 0 {
 		limit = 25
 	}
 
 	client := redis.NewClient(&redis.Options{
-		Addr: addr,
+		Addr: config.RedisURL,
 	})
 	return &RateLimiter{
 		client: client,

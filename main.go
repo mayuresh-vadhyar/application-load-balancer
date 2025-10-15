@@ -134,7 +134,7 @@ func main() {
 	server.InitializeHealthCheckInterval(config.HealthCheckInterval)
 	server.InitializeMaxUnhealthyChecks(config.MaxUnhealthyChecks)
 	server.Servers = lb.CreateServerList(config)
-	rl := rateLimiter.InitializeRateLimiter(config.RedisURL, config.RateLimit.Limit, config.RateLimit.Window)
+	rl := rateLimiter.InitializeRateLimiter()
 
 	mux := http.NewServeMux()
 	mux.Handle("/", loggingMiddleware(http.HandlerFunc(proxyHandler)))
