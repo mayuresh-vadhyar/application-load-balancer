@@ -10,7 +10,7 @@
   ],
   "DisableLogs": false,
   "Weights": [1,2,1],
-  "RedisURL":"localhost:6379",
+  "Redis": "localhost:6379",
   "RateLimit": {
     "Enable": true,
     "Limit": 10,
