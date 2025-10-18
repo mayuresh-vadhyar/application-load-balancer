@@ -141,7 +141,12 @@ func main() {
 	http.HandleFunc("/server", serverHandler)
 
 	log.Println("Starting load balancer on port", config.Port)
-	err := http.ListenAndServe(config.Port, rl.RateLimit(mux))
+	var err error
+	if rl == nil {
+		err = http.ListenAndServe(config.Port, nil)
+	} else {
+		err = http.ListenAndServe(config.Port, rl.RateLimit(mux))
+	}
 	if err != nil {
 		log.Fatalf("Error starting load balancer: %s\n", err.Error())
 	}
