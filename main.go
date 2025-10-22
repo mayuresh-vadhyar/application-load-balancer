@@ -136,8 +136,7 @@ func main() {
 	server.Servers = lb.CreateServerList(config)
 	rl := rateLimiter.InitializeRateLimiter()
 
-	mux := http.NewServeMux()
-	mux.Handle("/", loggingMiddleware(http.HandlerFunc(proxyHandler)))
+	http.Handle("/", loggingMiddleware(http.HandlerFunc(proxyHandler)))
 	http.HandleFunc("/server", serverHandler)
 
 	log.Println("Starting load balancer on port", config.Port)
@@ -145,7 +144,7 @@ func main() {
 	if rl == nil {
 		err = http.ListenAndServe(config.Port, nil)
 	} else {
-		err = http.ListenAndServe(config.Port, rl.RateLimit(mux))
+		err = http.ListenAndServe(config.Port, rl.RateLimit(http.DefaultServeMux))
 	}
 	if err != nil {
 		log.Fatalf("Error starting load balancer: %s\n", err.Error())
