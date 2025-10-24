@@ -13,6 +13,7 @@
   "Redis": "localhost:6379",
   "RateLimit": {
     "Enable": true,
+    "Strategy": "FW",
     "Limit": 10,
     "Window": "1m"
   }
