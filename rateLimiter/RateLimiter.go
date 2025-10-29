@@ -13,9 +13,10 @@ import (
 type Config = config.Config
 
 type RateLimiter struct {
-	client *redis.Client
-	limit  int
-	window time.Duration
+	client   *redis.Client
+	strategy RateLimitStrategy
+	limit    int
+	window   time.Duration
 }
 
 var ctx = context.Background()
@@ -35,14 +36,16 @@ func InitializeRateLimiter() *RateLimiter {
 	if limit == 0 {
 		limit = 25
 	}
+	strategy := GetRateLimitStrategy(config.RateLimit.Strategy)
 
 	client := redis.NewClient(&redis.Options{
 		Addr: config.RedisURL,
 	})
 	return &RateLimiter{
-		client: client,
-		limit:  limit,
-		window: window,
+		client:   client,
+		strategy: strategy,
+		limit:    limit,
+		window:   window,
 	}
 
 }
