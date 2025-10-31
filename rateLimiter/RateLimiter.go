@@ -55,23 +55,7 @@ func keyGenerator(token string) string {
 }
 
 func (rl RateLimiter) allowRequest(key string) (bool, error) {
-	count, err := rl.client.Incr(ctx, key).Result()
-	if err != nil {
-		return false, err
-	}
-
-	if count == 1 {
-		_, err = rl.client.Expire(ctx, key, rl.window).Result()
-		if err != nil {
-			return false, err
-		}
-	}
-
-	if count > int64(rl.limit) {
-		return false, nil
-	}
-
-	return true, nil
+	return rl.strategy.AllowRequest(rl, key)
 }
 
 func (rl RateLimiter) RateLimit(next http.Handler) http.Handler {
