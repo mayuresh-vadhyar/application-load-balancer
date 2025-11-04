@@ -15,15 +15,20 @@ type RateLimitConfig struct {
 }
 
 // TODO: Add cooldown to resume checks
+type HealthCheckConfig struct {
+	MaxUnhealthyChecks  int8   `json:"maxUnhealthyChecks"`
+	Interval 						string `json:"Interval"`
+	Cooldown 						string `json:"Cooldown"`
+}
+
 type Config struct {
 	Algorithm           string   `json:"algorithm"`
 	Port                string   `json:"port"`
 	DisableLogs         bool     `json:"disableLogs"`
-	HealthCheckInterval string   `json:"healthCheckInterval"`
-	MaxUnhealthyChecks  int8     `json:"maxUnhealthyChecks"`
 	Servers             []string `json:"servers"`
 	Weights             []int    `json:"weights"`
 	RateLimit           RateLimitConfig
+	HealthCheck         HealthCheckConfig
 	RedisURL            string `json:"redis"`
 }
 
