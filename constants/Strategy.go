@@ -5,4 +5,5 @@ const (
 	WEIGHTED_ROUND_ROBIN = "WRR"
 	IP_HASH              = "IPHash"
 	URL_HASH             = "UrlHash"
+	FIXED_WINDOW         = "FW"
 )
