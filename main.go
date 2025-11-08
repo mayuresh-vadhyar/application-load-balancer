@@ -131,8 +131,7 @@ func main() {
 	config := config.GetConfig()
 	lb = GetLoadBalancingStrategy(config.Algorithm)
 	InitializeLogResponseWriter(config.DisableLogs)
-	server.InitializeHealthCheckInterval(config.HealthCheckInterval)
-	server.InitializeMaxUnhealthyChecks(config.MaxUnhealthyChecks)
+	server.InitializeHealthCheckConfig(config.HealthCheck)
 	server.Servers = lb.CreateServerList(config)
 	rl := rateLimiter.InitializeRateLimiter()
 

@@ -8,6 +8,8 @@ import (
 	"slices"
 	"sync"
 	"time"
+
+	"github.com/mayuresh-vadhyar/application-load-balancer/config"
 )
 
 type Server struct {
@@ -37,9 +39,12 @@ type ServerPayload struct {
 	Weight int    `json:"weight"`
 }
 
+type HealthCheckConfig = config.HealthCheckConfig
+
 var Servers []*Server
 var interval time.Duration
-var intervalOnce sync.Once
+var cooldown time.Duration
+var healthCheckOnce sync.Once
 var maxUnhealthyChecks int8 = -1
 var idMutex sync.Mutex
 var lastId int = 0
@@ -104,20 +109,21 @@ func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 	return httputil.NewSingleHostReverseProxy(s.URL)
 }
 
-func InitializeHealthCheckInterval(healthCheckInterval string) time.Duration {
-	intervalOnce.Do(func() {
+func InitializeHealthCheckConfig(healthCheckConfig HealthCheckConfig)  {
+	healthCheckOnce.Do(func() {
 		var err error
-		interval, err = time.ParseDuration(healthCheckInterval)
+		interval, err = time.ParseDuration(healthCheckConfig.Interval)
 		if err != nil {
 			interval = (time.Second * 2)
 		}
+
+		cooldown, err = time.ParseDuration(healthCheckConfig.Cooldown)
+		if err != nil {
+			cooldown = (time.Second * 2)
+		}
+		
+		if healthCheckConfig.MaxUnhealthyChecks > 0 {
+			maxUnhealthyChecks = healthCheckConfig.MaxUnhealthyChecks
+		}
 	})
-
-	return interval
-}
-
-func InitializeMaxUnhealthyChecks(count int8) {
-	if count > 0 {
-		maxUnhealthyChecks = count
-	}
 }
