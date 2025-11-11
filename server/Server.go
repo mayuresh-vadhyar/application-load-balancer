@@ -109,19 +109,20 @@ func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 	return httputil.NewSingleHostReverseProxy(s.URL)
 }
 
-func InitializeHealthCheckConfig(healthCheckConfig HealthCheckConfig)  {
+func InitializeHealthCheckConfig(healthCheckConfig HealthCheckConfig) {
 	healthCheckOnce.Do(func() {
-		var err error
-		interval, err = time.ParseDuration(healthCheckConfig.Interval)
-		if err != nil {
+		var intervalErr error
+		var cooldownErr error
+		interval, intervalErr = time.ParseDuration(healthCheckConfig.Interval)
+		if intervalErr != nil || interval <= 0 {
 			interval = (time.Second * 2)
 		}
 
-		cooldown, err = time.ParseDuration(healthCheckConfig.Cooldown)
-		if err != nil {
-			cooldown = (time.Second * 2)
+		cooldown, cooldownErr = time.ParseDuration(healthCheckConfig.Cooldown)
+		if cooldownErr != nil || cooldown <= 0 || cooldown <= interval{
+			cooldown = 0
 		}
-		
+
 		if healthCheckConfig.MaxUnhealthyChecks > 0 {
 			maxUnhealthyChecks = healthCheckConfig.MaxUnhealthyChecks
 		}
