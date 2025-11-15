@@ -69,7 +69,7 @@ func CreateServer(rawUrl string) (*Server, error) {
 		IsHealthy:       true,
 		StopHealthCheck: cancel,
 	}
-	go StartHealthCheckRoutine(ctx, server, interval)
+	go StartHealthCheckRoutine(ctx, server, interval, cooldown)
 
 	return server, nil
 }
@@ -100,7 +100,7 @@ func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
 		IsHealthy:       true,
 		StopHealthCheck: cancel,
 	}
-	go StartHealthCheckRoutine(ctx, server, interval)
+	go StartHealthCheckRoutine(ctx, server, interval, cooldown)
 
 	return server, nil
 }
