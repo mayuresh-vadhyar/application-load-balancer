@@ -9,6 +9,10 @@ import (
 
 func StartHealthCheckRoutine(ctx context.Context, s *Server, healthCheckInterval time.Duration, cooldown time.Duration) {
 	go func ()  {
+		// TODO: Make configurable
+		restartCount := 0
+		maxRestart := 3
+
 		for {
 			runHealthCheck(ctx, s, interval)
 
@@ -22,11 +26,17 @@ func StartHealthCheckRoutine(ctx context.Context, s *Server, healthCheckInterval
 				return
 			}
 
+			if maxRestart > 0 && restartCount >= maxRestart {
+				log.Printf("Max restarts reached for %s. Not restarting health check.", s.URL)
+				return
+			}
+
 			select {
 				case <-ctx.Done():
 					log.Printf("Aborted cooldown restart for %s (context canceled)", s.URL)
 					return
 				case <-time.After(cooldown):
+					restartCount++
 					log.Printf("Restarting health check for %s after cooldown %v...", s.URL, cooldown)
 			}
 		}
