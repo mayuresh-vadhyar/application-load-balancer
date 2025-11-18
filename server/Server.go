@@ -44,6 +44,7 @@ type HealthCheckConfig = config.HealthCheckConfig
 var Servers []*Server
 var interval time.Duration
 var cooldown time.Duration
+var maxRestart int8
 var healthCheckOnce sync.Once
 var maxUnhealthyChecks int8 = -1
 var idMutex sync.Mutex
@@ -118,9 +119,11 @@ func InitializeHealthCheckConfig(healthCheckConfig HealthCheckConfig) {
 			interval = (time.Second * 2)
 		}
 
+		maxRestart = healthCheckConfig.MaxRestart
 		cooldown, cooldownErr = time.ParseDuration(healthCheckConfig.Cooldown)
 		if cooldownErr != nil || cooldown <= 0 || cooldown <= interval{
 			cooldown = 0
+			maxRestart = 0
 		}
 
 		if healthCheckConfig.MaxUnhealthyChecks > 0 {

@@ -14,11 +14,11 @@ type RateLimitConfig struct {
 	Window   string `json:"window"`
 }
 
-// TODO: Add cooldown to resume checks
 type HealthCheckConfig struct {
 	MaxUnhealthyChecks  int8   `json:"maxUnhealthyChecks"`
-	Interval 						string `json:"Interval"`
-	Cooldown 						string `json:"Cooldown"`
+	Interval 						string `json:"interval"`
+	Cooldown 						string `json:"cooldown"`
+	MaxRestart 					int8 `json:"maxRestart"`
 }
 
 type Config struct {
