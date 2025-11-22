@@ -6,7 +6,6 @@ type FixedWindowStrategy struct {
 }
 
 func (strategy FixedWindowStrategy) AllowRequest(rl RateLimiter, key string) (bool, error) {
-	// TODO: Apply lock
 	count, err := rl.client.Incr(ctx, key).Result()
 	if err != nil {
 		log.Println(err)
