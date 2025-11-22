@@ -7,11 +7,9 @@ import (
 	"time"
 )
 
-func StartHealthCheckRoutine(ctx context.Context, s *Server, healthCheckInterval time.Duration, cooldown time.Duration) {
+func StartHealthCheckRoutine(ctx context.Context, s *Server, healthCheckInterval time.Duration, cooldown time.Duration, maxRestart int8) {
 	go func ()  {
-		// TODO: Make configurable
-		restartCount := 0
-		maxRestart := 3
+		var restartCount int8 = 0
 
 		for {
 			runHealthCheck(ctx, s, interval)
