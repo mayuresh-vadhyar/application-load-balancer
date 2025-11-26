@@ -6,4 +6,5 @@ const (
 	IP_HASH              = "IPHash"
 	URL_HASH             = "UrlHash"
 	FIXED_WINDOW         = "FW"
+	TOKEN_BUCKET         = "TB"
 )

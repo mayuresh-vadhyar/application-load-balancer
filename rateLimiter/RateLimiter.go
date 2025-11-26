@@ -36,7 +36,7 @@ func InitializeRateLimiter() *RateLimiter {
 	if limit == 0 {
 		limit = 25
 	}
-	strategy := GetRateLimitStrategy(config.RateLimit.Strategy)
+	strategy := GetRateLimitStrategy(config.RateLimit)
 
 	client := redis.NewClient(&redis.Options{
 		Addr: config.RedisURL,

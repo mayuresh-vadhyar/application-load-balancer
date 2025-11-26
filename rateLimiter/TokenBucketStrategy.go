@@ -1,3 +1,7 @@
+package rateLimiter
+
+import "time"
+
 // go:embed token_bucket.lua
 var luaScript string
 
