@@ -12,7 +12,7 @@ type TokenBucketStrategy struct {
 func (strategy TokenBucketStrategy) AllowRequest(rl RateLimiter, key string) (bool, error) {
 	now := float64(time.Now().UnixNano()) / 1e9
 
-	res, err := rl.client.Eval(ctx, luaScript, []string{key}, rl.limit, 5, now).Int()
+	res, err := rl.client.Eval(ctx, luaScript, []string{key}, rl.limit, strategy.rate, now).Int()
 
 	if err != nil {
 		return false, err

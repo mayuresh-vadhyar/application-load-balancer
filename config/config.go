@@ -12,6 +12,7 @@ type RateLimitConfig struct {
 	Strategy string `json:"strategy"`
 	Limit    int    `json:"limit"`
 	Window   string `json:"window"`
+	Rate     int    `json:"rate"`
 }
 
 type HealthCheckConfig struct {
