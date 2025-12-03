@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-func StartHealthCheckRoutine(ctx context.Context, s *Server, healthCheckInterval time.Duration, cooldown time.Duration, maxRestart int8) {
-	go func ()  {
+func StartHealthCheckRoutine(ctx context.Context, s *Server, maxRestart int8) {
+	go func() {
 		var restartCount int8 = 0
 
 		for {
@@ -30,12 +30,12 @@ func StartHealthCheckRoutine(ctx context.Context, s *Server, healthCheckInterval
 			}
 
 			select {
-				case <-ctx.Done():
-					log.Printf("Aborted cooldown restart for %s (context canceled)", s.URL)
-					return
-				case <-time.After(cooldown):
-					restartCount++
-					log.Printf("Restarting health check for %s after cooldown %v...", s.URL, cooldown)
+			case <-ctx.Done():
+				log.Printf("Aborted cooldown restart for %s (context canceled)", s.URL)
+				return
+			case <-time.After(cooldown):
+				restartCount++
+				log.Printf("Restarting health check for %s after cooldown %v...", s.URL, cooldown)
 			}
 		}
 	}()

@@ -2,9 +2,9 @@
   "Algorithm": "WRR",
   "Port": ":5000",
   "HealthCheck": {
-    "HealthCheckInterval": "2s",
+    "Interval": "2s",
     "MaxUnhealthyChecks": 3,
-    "HealthCheckCooldown": "5s",
+    "Cooldown": "5s",
     "MaxRestart": 3
   },
   "Servers": [

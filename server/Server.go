@@ -70,7 +70,7 @@ func CreateServer(rawUrl string) (*Server, error) {
 		IsHealthy:       true,
 		StopHealthCheck: cancel,
 	}
-	go StartHealthCheckRoutine(ctx, server, interval, cooldown, maxRestart)
+	go StartHealthCheckRoutine(ctx, server, maxRestart)
 
 	return server, nil
 }
@@ -101,7 +101,7 @@ func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
 		IsHealthy:       true,
 		StopHealthCheck: cancel,
 	}
-	go StartHealthCheckRoutine(ctx, server, interval, cooldown, maxRestart)
+	go StartHealthCheckRoutine(ctx, server, maxRestart)
 
 	return server, nil
 }
@@ -121,7 +121,7 @@ func InitializeHealthCheckConfig(healthCheckConfig HealthCheckConfig) {
 
 		maxRestart = healthCheckConfig.MaxRestart
 		cooldown, cooldownErr = time.ParseDuration(healthCheckConfig.Cooldown)
-		if cooldownErr != nil || cooldown <= 0 || cooldown <= interval{
+		if cooldownErr != nil || cooldown <= 0 || cooldown <= interval {
 			cooldown = 0
 			maxRestart = 0
 		}
