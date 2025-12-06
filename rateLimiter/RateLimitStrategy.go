@@ -1,6 +1,8 @@
 package rateLimiter
 
 import (
+	"log"
+
 	"github.com/mayuresh-vadhyar/application-load-balancer/config"
 	"github.com/mayuresh-vadhyar/application-load-balancer/constants"
 )
@@ -20,6 +22,9 @@ func GetRateLimitStrategy(config RateLimitConfig) RateLimitStrategy {
 	case constants.FIXED_WINDOW:
 		return &FixedWindowStrategy{}
 	case constants.TOKEN_BUCKET:
+		if config.Rate <= 0 {
+			log.Fatalf("Token bucket refill rate missing")
+		}
 		return &TokenBucketStrategy{rate: config.Rate}
 	}
 	return nil
