@@ -41,6 +41,12 @@ func InitializeRateLimiter() *RateLimiter {
 	client := redis.NewClient(&redis.Options{
 		Addr: config.RedisURL,
 	})
+
+	_, pingErr := client.Ping(ctx).Result()
+	if pingErr != nil {
+		return nil
+	}
+
 	return &RateLimiter{
 		client:   client,
 		strategy: strategy,
