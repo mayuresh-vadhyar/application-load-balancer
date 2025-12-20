@@ -1,8 +1,11 @@
 package rateLimiter
 
-import "time"
+import (
+	"log"
+	"os"
+	"time"
+)
 
-// go:embed token_bucket.lua
 var luaScript string
 
 type TokenBucketStrategy struct {
@@ -10,13 +13,15 @@ type TokenBucketStrategy struct {
 }
 
 func (strategy TokenBucketStrategy) AllowRequest(rl RateLimiter, key string) (bool, error) {
-	now := float64(time.Now().UnixNano()) / 1e9
+	now := time.Now().UnixMilli()
+	res := rl.client.Eval(ctx, luaScript, []string{key}, rl.limit, strategy.rate, now).String()
+	return res == "ALLOW", nil
+}
 
-	res, err := rl.client.Eval(ctx, luaScript, []string{key}, rl.limit, strategy.rate, now).Int()
-
+func (strategy TokenBucketStrategy) init() {
+	data, err := os.ReadFile("rateLimiter/token_bucket.lua")
 	if err != nil {
-		return false, err
+		log.Fatal(err)
 	}
-
-	return res == 1, nil
+	luaScript = string(data)
 }
