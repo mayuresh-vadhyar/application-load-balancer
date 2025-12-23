@@ -25,7 +25,9 @@ func GetRateLimitStrategy(config RateLimitConfig) RateLimitStrategy {
 		if config.Rate <= 0 {
 			log.Fatalf("Token bucket refill rate missing")
 		}
-		return &TokenBucketStrategy{rate: config.Rate}
+		strategy := &TokenBucketStrategy{rate: config.Rate}
+		strategy.init()
+		return strategy
 	}
 	return nil
 }
