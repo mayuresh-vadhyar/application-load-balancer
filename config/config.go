@@ -16,21 +16,21 @@ type RateLimitConfig struct {
 }
 
 type HealthCheckConfig struct {
-	MaxUnhealthyChecks  int8   `json:"maxUnhealthyChecks"`
-	Interval 						string `json:"interval"`
-	Cooldown 						string `json:"cooldown"`
-	MaxRestart 					int8 `json:"maxRestart"`
+	MaxUnhealthyChecks int8   `json:"maxUnhealthyChecks"`
+	Interval           string `json:"interval"`
+	Cooldown           string `json:"cooldown"`
+	MaxRestart         int8   `json:"maxRestart"`
 }
 
 type Config struct {
-	Algorithm           string   `json:"algorithm"`
-	Port                string   `json:"port"`
-	DisableLogs         bool     `json:"disableLogs"`
-	Servers             []string `json:"servers"`
-	Weights             []int    `json:"weights"`
-	RateLimit           RateLimitConfig
-	HealthCheck         HealthCheckConfig
-	RedisURL            string `json:"redis"`
+	Algorithm   string   `json:"algorithm"`
+	Port        string   `json:"port"`
+	DisableLogs bool     `json:"disableLogs"`
+	Servers     []string `json:"servers"`
+	Weights     []int    `json:"weights"`
+	RateLimit   RateLimitConfig
+	HealthCheck HealthCheckConfig
+	RedisURL    string `json:"redis"`
 }
 
 var configOnce sync.Once
