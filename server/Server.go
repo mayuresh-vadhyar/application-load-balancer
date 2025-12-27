@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"slices"
@@ -107,7 +108,30 @@ func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
 }
 
 func (s *Server) ReverseProxy() *httputil.ReverseProxy {
-	return httputil.NewSingleHostReverseProxy(s.URL)
+	// TODO: Cache hot requests
+	proxy := httputil.NewSingleHostReverseProxy(s.URL)
+
+	// Case 1: Upstream responds with a 502
+	proxy.ModifyResponse = func(r *http.Response) error {
+		if r.StatusCode == http.StatusBadGateway {
+			s.markUnhealthy()
+		}
+		return nil
+	}
+
+	// Case 2: Proxy cannot reach upstream (timeouts, connection errors, etc.)
+	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		s.markUnhealthy()
+		http.Error(w, "Bad Gateway", http.StatusBadGateway)
+	}
+	return proxy
+}
+
+func (s *Server) markUnhealthy() {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+	s.UnhealthyChecks++
+	s.IsHealthy = false
 }
 
 func InitializeHealthCheckConfig(healthCheckConfig HealthCheckConfig) {
