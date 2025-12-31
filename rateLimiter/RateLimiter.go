@@ -7,20 +7,39 @@ import (
 	"time"
 
 	"github.com/mayuresh-vadhyar/application-load-balancer/config"
+	"github.com/mayuresh-vadhyar/application-load-balancer/constants"
 	"github.com/redis/go-redis/v9"
 )
 
 type Config = config.Config
 
 type RateLimiter struct {
-	client   *redis.Client
-	strategy RateLimitStrategy
-	limit    int
-	window   time.Duration
+	client     *redis.Client
+	strategy   RateLimitStrategy
+	identifier string
+	limit      int
+	window     time.Duration
 }
 
 var ctx = context.Background()
 var prefix = "_ratelimiter"
+
+func getIdentifierStrategy(config RateLimitConfig) string {
+	// TODO: Check if strategy exists
+	if config.Identifier == "" {
+		return constants.IP
+	} else {
+		return config.Identifier
+	}
+}
+
+func (rl RateLimiter) getIdentifier(r *http.Request) string {
+	switch rl.identifier {
+	case constants.IP:
+		return r.RemoteAddr
+	}
+	return "global"
+}
 
 func InitializeRateLimiter() *RateLimiter {
 	config := config.GetConfig()
@@ -37,6 +56,7 @@ func InitializeRateLimiter() *RateLimiter {
 		limit = 25
 	}
 	strategy := GetRateLimitStrategy(config.RateLimit)
+	identifierStrategy := getIdentifierStrategy(config.RateLimit)
 
 	client := redis.NewClient(&redis.Options{
 		Addr: config.RedisURL,
@@ -48,10 +68,11 @@ func InitializeRateLimiter() *RateLimiter {
 	}
 
 	return &RateLimiter{
-		client:   client,
-		strategy: strategy,
-		limit:    limit,
-		window:   window,
+		client:     client,
+		strategy:   strategy,
+		identifier: identifierStrategy,
+		limit:      limit,
+		window:     window,
 	}
 
 }
@@ -66,8 +87,8 @@ func (rl RateLimiter) allowRequest(key string) (bool, error) {
 
 func (rl RateLimiter) RateLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := r.RemoteAddr
-		key := keyGenerator(ip)
+		token := rl.getIdentifier(r)
+		key := keyGenerator(token)
 		allowed, err := rl.allowRequest(key)
 
 		if err != nil {
