@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/mayuresh-vadhyar/application-load-balancer/config"
-	"github.com/mayuresh-vadhyar/application-load-balancer/constants"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -21,13 +20,17 @@ type RateLimiter struct {
 	window     time.Duration
 }
 
+const (
+	IP = "IP"
+)
+
 var ctx = context.Background()
 var prefix = "_ratelimiter"
 
 func getIdentifierStrategy(config RateLimitConfig) string {
 	// TODO: Check if strategy exists
 	if config.Identifier == "" {
-		return constants.IP
+		return IP
 	} else {
 		return config.Identifier
 	}
@@ -35,7 +38,7 @@ func getIdentifierStrategy(config RateLimitConfig) string {
 
 func (rl RateLimiter) getIdentifier(r *http.Request) string {
 	switch rl.identifier {
-	case constants.IP:
+	case IP:
 		return r.RemoteAddr
 	}
 	return "global"
