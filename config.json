@@ -21,8 +21,10 @@
   "Redis": "localhost:6379",
   "RateLimit": {
     "Enable": true,
-    "Strategy": "FW",
+    "Strategy": "TB",
+    "Identifier": "IP",
     "Limit": 10,
-    "Window": "1m"
+    "Window": "1m",
+    "Rate": 10
   }
 }
