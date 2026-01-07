@@ -11,29 +11,30 @@ import (
 )
 
 type Config = config.Config
+type Identifier string
 
 type RateLimiter struct {
 	client     *redis.Client
 	strategy   RateLimitStrategy
-	identifier string
+	identifier Identifier
 	limit      int
 	window     time.Duration
 }
 
 const (
-	IP = "IP"
+	IP Identifier = "IP"
 )
 
 var ctx = context.Background()
 var prefix = "_ratelimiter"
 
-func getIdentifierStrategy(config RateLimitConfig) string {
-	// TODO: Check if strategy exists
-	if config.Identifier == "" {
+func getIdentifierStrategy(config RateLimitConfig) Identifier {
+	identifier := Identifier(config.Identifier)
+	if config.Identifier == ""  {
 		return IP
-	} else {
-		return config.Identifier
 	}
+
+	return identifier
 }
 
 func (rl RateLimiter) getIdentifier(r *http.Request) string {
