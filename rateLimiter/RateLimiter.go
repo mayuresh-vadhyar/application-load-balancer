@@ -22,7 +22,8 @@ type RateLimiter struct {
 }
 
 const (
-	IP Identifier = "IP"
+	IP           Identifier = "IP"
+	defaultValue string     = "global"
 )
 
 var ctx = context.Background()
@@ -30,7 +31,7 @@ var prefix = "_ratelimiter"
 
 func getIdentifierStrategy(config RateLimitConfig) Identifier {
 	identifier := Identifier(config.Identifier)
-	if config.Identifier == ""  {
+	if config.Identifier == "" {
 		return IP
 	}
 
@@ -42,7 +43,7 @@ func (rl RateLimiter) getIdentifier(r *http.Request) string {
 	case IP:
 		return r.RemoteAddr
 	}
-	return "global"
+	return defaultValue
 }
 
 func InitializeRateLimiter() *RateLimiter {
