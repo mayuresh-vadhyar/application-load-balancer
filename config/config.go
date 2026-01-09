@@ -8,11 +8,12 @@ import (
 )
 
 type RateLimitConfig struct {
-	Enable   bool   `json:"enable"`
-	Strategy string `json:"strategy"`
-	Limit    int    `json:"limit"`
-	Window   string `json:"window"`
-	Rate     int    `json:"rate"`
+	Enable     bool   `json:"enable"`
+	Strategy   string `json:"strategy"`
+	Identifier string `json:"identifier"`
+	Limit      int    `json:"limit"`
+	Window     string `json:"window"`
+	Rate       int    `json:"rate"`
 }
 
 type HealthCheckConfig struct {
