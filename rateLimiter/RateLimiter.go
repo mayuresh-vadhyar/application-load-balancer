@@ -29,9 +29,18 @@ const (
 var ctx = context.Background()
 var prefix = "_ratelimiter"
 
+func isValidIdentifier(id Identifier) bool {
+	switch id {
+	case IP:
+		return true
+	default:
+		return false
+	}
+}
+
 func getIdentifierStrategy(config RateLimitConfig) Identifier {
 	identifier := Identifier(config.Identifier)
-	if config.Identifier == "" {
+	if config.Identifier == "" || !isValidIdentifier(identifier) {
 		return IP
 	}
 
