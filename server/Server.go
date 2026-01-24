@@ -159,7 +159,7 @@ func InitializeHealthCheckConfig(healthCheckConfig HealthCheckConfig) {
 }
 
 func StartServerPoolLogRoutine() {
-	client := Redis.InitializeRedisClient()
+	client := Redis.GetClient()
 	ctx := context.Background()
 	// TODO: Make separate configurable interval
 	ticker := time.NewTicker(interval)

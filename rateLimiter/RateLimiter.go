@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mayuresh-vadhyar/application-load-balancer/Redis"
 	"github.com/mayuresh-vadhyar/application-load-balancer/config"
 	"github.com/redis/go-redis/v9"
 )
@@ -72,9 +73,7 @@ func InitializeRateLimiter() *RateLimiter {
 	strategy := GetRateLimitStrategy(config.RateLimit)
 	identifierStrategy := getIdentifierStrategy(config.RateLimit)
 
-	client := redis.NewClient(&redis.Options{
-		Addr: config.RedisURL,
-	})
+	client := Redis.GetClient()
 
 	_, pingErr := client.Ping(ctx).Result()
 	if pingErr != nil {

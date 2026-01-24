@@ -11,7 +11,7 @@ import (
 var initOnce sync.Once
 var client *redis.Client
 
-func InitializeRedisClient() *redis.Client {
+func GetClient() *redis.Client {
 	initOnce.Do(func() {
 		config := config.GetConfig()
 		ctx := context.Background()
