@@ -75,8 +75,7 @@ func InitializeRateLimiter() *RateLimiter {
 
 	client := Redis.GetClient()
 
-	_, pingErr := client.Ping(ctx).Result()
-	if pingErr != nil {
+	if client == nil {
 		return nil
 	}
 

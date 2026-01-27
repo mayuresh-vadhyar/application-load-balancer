@@ -160,6 +160,11 @@ func InitializeHealthCheckConfig(healthCheckConfig HealthCheckConfig) {
 
 func StartServerPoolLogRoutine() {
 	client := Redis.GetClient()
+	if client == nil {
+		log.Printf("Redis client not initialized. Skipping Server Pool Log Routine")
+		return
+	}
+
 	ctx := context.Background()
 	// TODO: Make separate configurable interval
 	ticker := time.NewTicker(interval)
