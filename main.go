@@ -132,8 +132,9 @@ func main() {
 	lb = GetLoadBalancingStrategy(config.Algorithm)
 	InitializeLogResponseWriter(config.DisableLogs)
 	server.InitializeHealthCheckConfig(config.HealthCheck)
+	server.StartServerPoolLogRoutine()
 	server.Servers = lb.CreateServerList(config)
-	rl := rateLimiter.InitializeRateLimiter()
+	rl := rateLimiter.GetRateLimiter()
 
 	http.Handle("/", loggingMiddleware(http.HandlerFunc(proxyHandler)))
 	http.HandleFunc("/server", serverHandler)

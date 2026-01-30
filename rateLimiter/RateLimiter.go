@@ -56,7 +56,7 @@ func (rl RateLimiter) getIdentifier(r *http.Request) string {
 	return defaultValue
 }
 
-func InitializeRateLimiter() *RateLimiter {
+func GetRateLimiter() *RateLimiter {
 	config := config.GetConfig()
 	if config.RedisURL == "" || !config.RateLimit.Enable {
 		return nil
