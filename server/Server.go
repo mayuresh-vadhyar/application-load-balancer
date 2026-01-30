@@ -168,17 +168,16 @@ func StartServerPoolLogRoutine() {
 	ctx := context.Background()
 	// TODO: Make separate configurable interval
 	ticker := time.NewTicker(interval)
-	log.Print(Servers)
-	defer ticker.Stop()
 
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
 				log.Printf("Stopping Server Pool Log Routine")
+				ticker.Stop()
+				return
 			case <-ticker.C:
 				// TODO: fetch & save as obj
-				log.Print(Servers)
 				res := client.Set(context.Background(), "SERVER_POOL", Servers, 0)
 				if res.Err() != nil {
 					log.Printf("SERVER POOL LOGGING ERROR: %v", res.Err())
