@@ -24,14 +24,15 @@ type HealthCheckConfig struct {
 }
 
 type Config struct {
-	Algorithm   string   `json:"algorithm"`
-	Port        string   `json:"port"`
-	DisableLogs bool     `json:"disableLogs"`
-	Servers     []string `json:"servers"`
-	Weights     []int    `json:"weights"`
-	RateLimit   RateLimitConfig
-	HealthCheck HealthCheckConfig
-	RedisURL    string `json:"redis"`
+	Algorithm          string   `json:"algorithm"`
+	Port               string   `json:"port"`
+	DisableLogs        bool     `json:"disableLogs"`
+	Servers            []string `json:"servers"`
+	Weights            []int    `json:"weights"`
+	RateLimit          RateLimitConfig
+	HealthCheck        HealthCheckConfig
+	RedisURL           string `json:"redis"`
+	ServerPoolInterval string `json:"serverPoolInterval"`
 }
 
 var configOnce sync.Once
