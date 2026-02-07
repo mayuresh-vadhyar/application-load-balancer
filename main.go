@@ -45,7 +45,7 @@ func getServer(w http.ResponseWriter, r *http.Request) {
 	Response.WriteSuccessResponseArray(w, http.StatusOK, filteredServers)
 }
 
-func createServer(w http.ResponseWriter, r *http.Request) {
+func registerServer(w http.ResponseWriter, r *http.Request) {
 	var newServer server.ServerPayload
 	if decodeErr := json.NewDecoder(r.Body).Decode(&newServer); decodeErr != nil {
 		Response.WriteErrorResponse(w, http.StatusBadRequest, decodeErr.Error())
@@ -69,7 +69,7 @@ func createServer(w http.ResponseWriter, r *http.Request) {
 	Response.WriteSuccessResponse(w, http.StatusCreated, item)
 }
 
-func deleteServer(w http.ResponseWriter, r *http.Request) {
+func deregisterServer(w http.ResponseWriter, r *http.Request) {
 	var target server.ServerPayload
 	if decodeErr := json.NewDecoder(r.Body).Decode(&target); decodeErr != nil {
 		Response.WriteErrorResponse(w, http.StatusBadRequest, decodeErr.Error())
@@ -90,9 +90,9 @@ func serverHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		getServer(w, r)
 	case http.MethodPost:
-		createServer(w, r)
+		registerServer(w, r)
 	case http.MethodDelete:
-		deleteServer(w, r)
+		deregisterServer(w, r)
 	default:
 		Response.WriteErrorResponse(w, http.StatusMethodNotAllowed, "Method Not Allowed")
 	}
