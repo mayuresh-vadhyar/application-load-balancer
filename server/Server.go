@@ -182,10 +182,14 @@ func StartServerPoolLogRoutine(serverPoolInterval string) {
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				// TODO: fetch & save as obj
-				res := client.Set(context.Background(), "SERVER_POOL", Servers, 0)
-				if res.Err() != nil {
-					log.Printf("SERVER POOL LOGGING ERROR: %v", res.Err())
+				servers, err := json.Marshal(Servers)
+				if err != nil {
+					log.Printf("Error parsing servers for server pool: %v", err)
+				}
+
+				redisErr := client.Set(context.Background(), "SERVER_POOL", servers, 0).Err()
+				if redisErr != nil {
+					log.Printf("SERVER POOL LOGGING ERROR: %v", redisErr)
 				}
 			}
 		}
