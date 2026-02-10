@@ -173,12 +173,13 @@ func StartServerPoolLogRoutine(serverPoolInterval string) {
 
 	ctx := context.Background()
 	ticker := time.NewTicker(logInterval)
+	id := config.GetConfig().Id
 
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Printf("Stopping Server Pool Log Routine")
+				log.Printf("Stopping Server Pool Log Routine for Load Balancer with ID: %s", id)
 				ticker.Stop()
 				return
 			case <-ticker.C:
@@ -187,7 +188,7 @@ func StartServerPoolLogRoutine(serverPoolInterval string) {
 					log.Printf("Error parsing servers for server pool: %v", err)
 				}
 
-				redisErr := client.Set(context.Background(), "SERVER_POOL", servers, 0).Err()
+				redisErr := client.Set(context.Background(), "SERVER_POOL:"+id, servers, 0).Err()
 				if redisErr != nil {
 					log.Printf("SERVER POOL LOGGING ERROR: %v", redisErr)
 				}

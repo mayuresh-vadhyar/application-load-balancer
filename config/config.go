@@ -24,6 +24,7 @@ type HealthCheckConfig struct {
 }
 
 type Config struct {
+	Id                 string   `json:"id"`
 	Algorithm          string   `json:"algorithm"`
 	Port               string   `json:"port"`
 	DisableLogs        bool     `json:"disableLogs"`
