@@ -43,6 +43,7 @@ type ServerPayload struct {
 }
 
 type HealthCheckConfig = config.HealthCheckConfig
+type Config = config.Config
 
 var Servers []*Server
 var interval time.Duration
@@ -158,8 +159,8 @@ func InitializeHealthCheckConfig(healthCheckConfig HealthCheckConfig) {
 	})
 }
 
-func StartServerPoolLogRoutine(serverPoolInterval string) {
-	logInterval, parseErr := time.ParseDuration(serverPoolInterval)
+func StartServerPoolLogRoutine(config Config) {
+	logInterval, parseErr := time.ParseDuration(config.ServerPoolInterval)
 	if parseErr != nil || logInterval <= 0 {
 		log.Printf("Server Pool Interval not configured. Skipping Server Pool Logging")
 		return
@@ -173,7 +174,11 @@ func StartServerPoolLogRoutine(serverPoolInterval string) {
 
 	ctx := context.Background()
 	ticker := time.NewTicker(logInterval)
-	id := config.GetConfig().Id
+	id := config.Id
+	expiry, expiryErr := time.ParseDuration(config.ServerPoolExpiry)
+	if expiryErr != nil || expiry <= 0 {
+		expiry = (time.Hour * 2)
+	}
 
 	go func() {
 		for {
@@ -188,7 +193,7 @@ func StartServerPoolLogRoutine(serverPoolInterval string) {
 					log.Printf("Error parsing servers for server pool: %v", err)
 				}
 
-				redisErr := client.Set(context.Background(), "SERVER_POOL:"+id, servers, 0).Err()
+				redisErr := client.Set(context.Background(), "SERVER_POOL:"+id, servers, expiry).Err()
 				if redisErr != nil {
 					log.Printf("SERVER POOL LOGGING ERROR: %v", redisErr)
 				}
