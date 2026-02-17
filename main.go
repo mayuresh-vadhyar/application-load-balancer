@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -114,6 +115,13 @@ func generateHash() (string, error) {
 }
 
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	select {
+	case <-ctx.Done():
+		return
+	default:
+	}
+
 	server := lb.GetNextServer(server.Servers, r)
 	if server == nil {
 		Response.WriteErrorResponse(w, http.StatusServiceUnavailable, "No healthy server available")
@@ -124,6 +132,9 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	r.Header.Add("tracking-id", hash)
 	w.Header().Add("tracking-id", hash)
 	w.Header().Add("X-Forwarded-Server", server.URL.String())
+	ctx = context.WithValue(ctx, "tracking-id", hash)
+
+	r = r.WithContext(ctx)
 	server.ReverseProxy().ServeHTTP(w, r)
 }
 
