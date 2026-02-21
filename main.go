@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/mayuresh-vadhyar/application-load-balancer/Redis"
 	"github.com/mayuresh-vadhyar/application-load-balancer/Response"
 	"github.com/mayuresh-vadhyar/application-load-balancer/config"
 	"github.com/mayuresh-vadhyar/application-load-balancer/rateLimiter"
@@ -112,6 +113,25 @@ func generateHash() (string, error) {
 		hash = hash[:hashLength]
 	}
 	return hash, nil
+}
+
+func checkInCache(r *http.Request) (hit string, miss bool) {
+	if r.Method != http.MethodGet {
+		return "", true
+	}
+	client := Redis.GetClient()
+	if client == nil {
+		log.Print("Redis client not initialized")
+		return "", true
+	}
+
+	key := r.URL.Path + r.URL.RawQuery
+	res := client.Get(r.Context(), key)
+	if res.Err() != nil {
+		log.Print(res.Err().Error())
+		return "", true
+	}
+	return res.Val(), false
 }
 
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
