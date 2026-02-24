@@ -13,11 +13,13 @@ import (
 	"github.com/mayuresh-vadhyar/application-load-balancer/config"
 	"github.com/mayuresh-vadhyar/application-load-balancer/rateLimiter"
 	"github.com/mayuresh-vadhyar/application-load-balancer/server"
+	"github.com/redis/go-redis/v9"
 )
 
 type Server = server.Server
 
 var lb LoadBalancingStrategy
+var client *redis.Client
 
 func getServer(w http.ResponseWriter, r *http.Request) {
 	filteredServers := []*Server{}
@@ -119,7 +121,6 @@ func checkInCache(r *http.Request) (hit string, miss bool) {
 	if r.Method != http.MethodGet {
 		return "", true
 	}
-	client := Redis.GetClient()
 	if client == nil {
 		log.Print("Redis client not initialized")
 		return "", true
@@ -166,6 +167,7 @@ func main() {
 	server.StartServerPoolLogRoutine(config)
 	server.Servers = lb.CreateServerList(config)
 	rl := rateLimiter.GetRateLimiter()
+	client = Redis.GetClient()
 
 	http.Handle("/", loggingMiddleware(http.HandlerFunc(proxyHandler)))
 	http.HandleFunc("/server", serverHandler)
