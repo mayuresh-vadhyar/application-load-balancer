@@ -156,7 +156,23 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	ctx = context.WithValue(ctx, "tracking-id", hash)
 
 	r = r.WithContext(ctx)
-	server.ReverseProxy().ServeHTTP(w, r)
+	if client == nil || r.Header.Get("Cache-Control") == "no-cache" {
+		server.ReverseProxy().ServeHTTP(w, r)
+		return
+	}
+
+	hit, miss := checkInCache(r)
+	if miss {
+		// Cache miss, proxy the request and store the response in Redis
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Add("X-Cache-Hit", "true")
+		w.WriteHeader(http.StatusNotModified)
+
+		if encodeErr := json.NewEncoder(w).Encode(hit); encodeErr != nil {
+			Response.WriteErrorResponse(w, http.StatusInternalServerError, encodeErr.Error())
+		}
+	}
 }
 
 func main() {
