@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/http/httptest"
+	"time"
 
 	"github.com/mayuresh-vadhyar/application-load-balancer/Redis"
 	"github.com/mayuresh-vadhyar/application-load-balancer/Response"
@@ -163,7 +165,13 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 
 	hit, miss := checkInCache(r)
 	if miss {
-		// Cache miss, proxy the request and store the response in Redis
+		recorder := httptest.NewRecorder()
+		server.ReverseProxy().ServeHTTP(recorder, r)
+		if recorder.Code == http.StatusOK {
+			key := r.URL.Path + r.URL.RawQuery
+			expiryTime := 5 * time.Minute
+			client.Set(ctx, key, recorder.Body.String(), expiryTime)
+		}
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Add("X-Cache-Hit", "true")
