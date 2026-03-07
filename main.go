@@ -137,6 +137,16 @@ func checkInCache(r *http.Request) (hit string, miss bool) {
 	return res.Val(), false
 }
 
+func cacheMissHandler(server *Server, r *http.Request) {
+	recorder := httptest.NewRecorder()
+	server.ReverseProxy().ServeHTTP(recorder, r)
+	if recorder.Code == http.StatusOK {
+		key := r.URL.Path + r.URL.RawQuery
+		expiryTime := 5 * time.Minute
+		client.Set(r.Context(), key, recorder.Body.String(), expiryTime)
+	}
+}
+
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	select {
@@ -165,13 +175,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 
 	hit, miss := checkInCache(r)
 	if miss {
-		recorder := httptest.NewRecorder()
-		server.ReverseProxy().ServeHTTP(recorder, r)
-		if recorder.Code == http.StatusOK {
-			key := r.URL.Path + r.URL.RawQuery
-			expiryTime := 5 * time.Minute
-			client.Set(ctx, key, recorder.Body.String(), expiryTime)
-		}
+		cacheMissHandler(server, r)
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Add("X-Cache-Hit", "true")
