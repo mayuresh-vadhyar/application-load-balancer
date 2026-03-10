@@ -111,7 +111,6 @@ func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
 }
 
 func (s *Server) ReverseProxy() *httputil.ReverseProxy {
-	// TODO: Cache hot requests
 	proxy := httputil.NewSingleHostReverseProxy(s.URL)
 
 	// Case 1: Upstream responds with a 502
@@ -127,6 +126,7 @@ func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 		s.markUnhealthy()
 		http.Error(w, "Bad Gateway", http.StatusBadGateway)
 	}
+
 	return proxy
 }
 

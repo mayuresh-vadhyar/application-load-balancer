@@ -22,6 +22,8 @@ type Server = server.Server
 
 var lb LoadBalancingStrategy
 var client *redis.Client
+var requestCacheExpiry time.Duration
+var enableRequestCache = false
 
 func getServer(w http.ResponseWriter, r *http.Request) {
 	filteredServers := []*Server{}
@@ -119,6 +121,17 @@ func generateHash() (string, error) {
 	return hash, nil
 }
 
+func InitializeRequestCaching(expiry string) {
+	var err error
+
+	requestCacheExpiry, err = time.ParseDuration(expiry)
+	if err != nil {
+		if nilExpiry, _ := time.ParseDuration("0s"); requestCacheExpiry > nilExpiry {
+			enableRequestCache = true
+		}
+	}
+}
+
 func checkInCache(r *http.Request) (hit string, miss bool) {
 	if r.Method != http.MethodGet {
 		return "", true
@@ -142,8 +155,7 @@ func cacheMissHandler(server *Server, r *http.Request) {
 	server.ReverseProxy().ServeHTTP(recorder, r)
 	if recorder.Code == http.StatusOK {
 		key := r.URL.Path + r.URL.RawQuery
-		expiryTime := 5 * time.Minute
-		client.Set(r.Context(), key, recorder.Body.String(), expiryTime)
+		client.Set(r.Context(), key, recorder.Body.String(), requestCacheExpiry)
 	}
 }
 
@@ -168,7 +180,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	ctx = context.WithValue(ctx, "tracking-id", hash)
 
 	r = r.WithContext(ctx)
-	if client == nil || r.Header.Get("Cache-Control") == "no-cache" {
+	if client == nil || !enableRequestCache || r.Header.Get("Cache-Control") == "no-cache" {
 		server.ReverseProxy().ServeHTTP(w, r)
 		return
 	}
@@ -194,6 +206,7 @@ func main() {
 	server.InitializeHealthCheckConfig(config.HealthCheck)
 	server.StartServerPoolLogRoutine(config)
 	server.Servers = lb.CreateServerList(config)
+	InitializeRequestCaching(config.RequestCacheExpiry)
 	rl := rateLimiter.GetRateLimiter()
 	client = Redis.GetClient()
 
