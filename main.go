@@ -124,6 +124,10 @@ func generateHash() (string, error) {
 func InitializeRequestCaching(expiry string) {
 	var err error
 
+	if client == nil {
+		return
+	}
+
 	requestCacheExpiry, err = time.ParseDuration(expiry)
 	if err != nil {
 		if nilExpiry, _ := time.ParseDuration("0s"); requestCacheExpiry > nilExpiry {
@@ -134,10 +138,6 @@ func InitializeRequestCaching(expiry string) {
 
 func checkInCache(r *http.Request) (hit string, miss bool) {
 	if r.Method != http.MethodGet {
-		return "", true
-	}
-	if client == nil {
-		log.Print("Redis client not initialized")
 		return "", true
 	}
 
@@ -180,7 +180,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	ctx = context.WithValue(ctx, "tracking-id", hash)
 
 	r = r.WithContext(ctx)
-	if client == nil || !enableRequestCache || r.Header.Get("Cache-Control") == "no-cache" {
+	if !enableRequestCache || r.Header.Get("Cache-Control") == "no-cache" {
 		server.ReverseProxy().ServeHTTP(w, r)
 		return
 	}
