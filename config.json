@@ -1,4 +1,8 @@
 {
+  "Id": "load-balancer-1",
+  "ServerPoolInterval": "5s",
+  "ServerPoolExpiry": "10s",
+  "RequestCacheExpiry": "20s",
   "Algorithm": "WRR",
   "Port": ":5000",
   "HealthCheck": {

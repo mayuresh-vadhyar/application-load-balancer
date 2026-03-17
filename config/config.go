@@ -33,6 +33,7 @@ type Config struct {
 	RateLimit          RateLimitConfig
 	HealthCheck        HealthCheckConfig
 	RedisURL           string `json:"redis"`
+	RequestCacheExpiry string `json:"requestCacheExpiry"`
 	ServerPoolExpiry   string `json:"serverPoolExpiry"`
 	ServerPoolInterval string `json:"serverPoolInterval"`
 }
