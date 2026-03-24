@@ -33,3 +33,36 @@ Example `config.json` (minimal):
   "rateLimit": { "enable": false }
 }
 ```
+
+**API**
+- `GET /server` : List registered servers. Supports query params `isHealthy` and `urlParam`.
+- `POST /server` : Register a new server. Body: `{ "url": "http://<host>:<port>", "weight": <int> }`.
+- `DELETE /server` : Remove a server. Body: `{ "url": "http://<host>:<port>" }`.
+- `GET /` : Main proxy endpoint — forwards requests to upstream hosts.
+
+Headers:
+- `tracking-id`: added to both request and response to correlate proxied requests.
+- `X-Forwarded-Server`: indicates the chosen upstream host.
+
+**Rate Limiting**
+- Enabled when `config.json` provides a Redis URL and `rateLimit.enable` is `true`.
+- Available strategies: `FixedWindow` (simple counter + expiry) and `TokenBucket` (Lua script in `rateLimiter/token_bucket.lua`).
+
+**Health Checks**
+- Background routines perform `HEAD` requests to upstreams at the configured `healthCheck.interval`.
+- Servers failing checks are marked unhealthy; configurable cooldown and restart behavior govern removal and retries.
+
+**Build & Run**
+Requires Go (>=1.20) and, if using rate limiting, a running Redis instance.
+
+Build:
+```powershell
+go build -o alb.exe .
+```
+
+Run (dev):
+```powershell
+go run main.go
+```
+
+There is also `go-start.bat` included for a quick start on Windows.
