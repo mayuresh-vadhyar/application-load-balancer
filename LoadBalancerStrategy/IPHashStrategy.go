@@ -8,6 +8,7 @@ import (
 	"sync"
 )
 
+
 type IPHashStrategy struct {
 	Mutex sync.Mutex
 }

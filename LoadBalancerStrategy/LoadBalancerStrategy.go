@@ -10,6 +10,7 @@ import (
 )
 
 type Config = config.Config
+type Server = server.Server
 
 type LoadBalancingStrategy interface {
 	GetNextServer(servers []*Server, r *http.Request) *Server
