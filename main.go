@@ -13,12 +13,14 @@ import (
 	"github.com/mayuresh-vadhyar/application-load-balancer/Redis"
 	"github.com/mayuresh-vadhyar/application-load-balancer/Response"
 	"github.com/mayuresh-vadhyar/application-load-balancer/config"
+	"github.com/mayuresh-vadhyar/application-load-balancer/loadBalancerStrategy"
 	"github.com/mayuresh-vadhyar/application-load-balancer/rateLimiter"
 	"github.com/mayuresh-vadhyar/application-load-balancer/server"
 	"github.com/redis/go-redis/v9"
 )
 
 type Server = server.Server
+type LoadBalancingStrategy = loadBalancerStrategy.LoadBalancingStrategy
 
 var lb LoadBalancingStrategy
 var client *redis.Client
@@ -201,7 +203,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	config := config.GetConfig()
-	lb = GetLoadBalancingStrategy(config.Algorithm)
+	lb = loadBalancerStrategy.GetLoadBalancingStrategy(config.Algorithm)
 	InitializeLogResponseWriter(config.DisableLogs)
 	server.InitializeHealthCheckConfig(config.HealthCheck)
 	server.StartServerPoolLogRoutine(config)
