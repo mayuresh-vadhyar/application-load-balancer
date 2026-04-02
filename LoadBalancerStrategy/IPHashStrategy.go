@@ -1,4 +1,4 @@
-package main
+package loadBalancerStrategy
 
 import (
 	"hash/fnv"
@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"sync"
 )
-
 
 type IPHashStrategy struct {
 	Mutex sync.Mutex
