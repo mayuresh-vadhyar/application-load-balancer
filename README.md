@@ -10,6 +10,10 @@ Lightweight HTTP load balancer implemented in Go. Routes incoming requests to a 
 - **Rate Limiting (optional):** Redis-backed strategies like Fixed Window and Token Bucket (Lua script).
 - **Config-driven:** Behavior controlled by `config.json`.
 
+**Quick Links**
+- Config: [config.json](config.json)
+- Rate limiter Lua script: [rateLimiter/token_bucket.lua](rateLimiter/token_bucket.lua)
+
 **Configuration**
 All runtime configuration lives in `config.json`. Key fields:
 
@@ -66,3 +70,18 @@ go run main.go
 ```
 
 There is also `go-start.bat` included for a quick start on Windows.
+
+**Project Layout (high level)**
+- `main.go` — HTTP server, routing, initialization.
+- `LoadBalancingStrategy.go`, `RoundRobinStrategy.go`, `WeightedRoundRobinStrategy.go`, `IPHashStrategy.go`, `URLHashStrategy.go` — load balancing code.
+- `server/` — server registration, health checks, reverse proxy handling.
+- `rateLimiter/` — Redis-based rate limiting strategies and Lua script.
+- `config/` — configuration parsing.
+- `Response/` — helper responses for success/error.
+
+**Next steps & Notes**
+- To enable rate limiting, set `rateLimit.enable` to `true` and provide a reachable `redis` address in `config.json`.
+- Logs can be disabled with `disableLogs` in the config.
+- Contributions welcome — open an issue or PR.
+
+---
