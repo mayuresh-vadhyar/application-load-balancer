@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/mayuresh-vadhyar/application-load-balancer/Redis"
@@ -24,6 +25,10 @@ type RateLimiter struct {
 
 const (
 	IP           Identifier = "IP"
+	ApiKey       Identifier = "ApiKey"
+	UserID       Identifier = "UserID"
+	ApiPath      Identifier = "ApiPath"
+	Resource     Identifier = "Resource"
 	defaultValue string     = "global"
 )
 
@@ -31,12 +36,8 @@ var ctx = context.Background()
 var prefix = "_ratelimiter"
 
 func isValidIdentifier(id Identifier) bool {
-	switch id {
-	case IP:
-		return true
-	default:
-		return false
-	}
+	identifiers := []Identifier{IP, ApiKey, UserID, ApiPath, Resource}
+	return slices.Contains(identifiers, id)
 }
 
 func getIdentifierStrategy(config RateLimitConfig) Identifier {
