@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/mayuresh-vadhyar/application-load-balancer/Redis"
@@ -53,6 +54,14 @@ func (rl RateLimiter) getIdentifier(r *http.Request) string {
 	switch rl.identifier {
 	case IP:
 		return r.RemoteAddr
+	case ApiKey:
+		return r.Header.Get("X-API-Key")
+	case UserID:
+		return r.Header.Get("X-User-ID")
+	case ApiPath:
+		return r.URL.Path
+	case Resource:
+		return strings.Split(r.URL.Path, "/")[1]
 	}
 	return defaultValue
 }
