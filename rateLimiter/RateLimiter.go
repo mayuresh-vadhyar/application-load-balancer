@@ -19,7 +19,7 @@ type Identifier string
 type RateLimiter struct {
 	client     *redis.Client
 	strategy   RateLimitStrategy
-	identifier Identifier
+	identifierStrategy Identifier
 	limit      int
 	window     time.Duration
 }
@@ -36,14 +36,14 @@ const (
 var ctx = context.Background()
 var prefix = "_ratelimiter"
 
-func isValidIdentifier(id Identifier) bool {
+func isValidIdentifierStrategy(id Identifier) bool {
 	identifiers := []Identifier{IP, ApiKey, UserID, ApiPath, Resource}
 	return slices.Contains(identifiers, id)
 }
 
 func getIdentifierStrategy(config RateLimitConfig) Identifier {
 	identifier := Identifier(config.Identifier)
-	if config.Identifier == "" || !isValidIdentifier(identifier) {
+	if config.Identifier == "" || !isValidIdentifierStrategy(identifier) {
 		return IP
 	}
 
@@ -51,7 +51,7 @@ func getIdentifierStrategy(config RateLimitConfig) Identifier {
 }
 
 func (rl RateLimiter) getIdentifier(r *http.Request) string {
-	switch rl.identifier {
+	switch rl.identifierStrategy {
 	case IP:
 		return r.RemoteAddr
 	case ApiKey:
@@ -92,7 +92,7 @@ func GetRateLimiter() *RateLimiter {
 	return &RateLimiter{
 		client:     client,
 		strategy:   strategy,
-		identifier: identifierStrategy,
+		identifierStrategy: identifierStrategy,
 		limit:      limit,
 		window:     window,
 	}
