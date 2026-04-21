@@ -17,23 +17,41 @@ Lightweight HTTP load balancer implemented in Go. Routes incoming requests to a 
 **Configuration**
 All runtime configuration lives in `config.json`. Key fields:
 
-- **`algorithm`**: Balancing algorithm to use. Valid values: `RR`, `WRR`, `IPHash`, `UrlHash`.
+- **`Id`**: Unique identifier for the load balancer instance.
+- **`algorithm`**: Balancing algorithm to use. Valid values: `RR` (Round Robin), `WRR` (Weighted Round Robin), `IPHash`, `UrlHash`.
 - **`port`**: HTTP listen port (e.g. `":8080"`).
 - **`disableLogs`**: Disable request logging when `true`.
 - **`servers`**: Initial list of backend server URLs.
 - **`weights`**: Parallel array of weights when using weighted round robin.
-- **`rateLimit`**: Rate limiter config (enable, strategy, identifier, limit, window).
-- **`healthCheck`**: Health check settings (interval, cooldown, maxUnhealthyChecks, maxRestart).
-- **`redis`**: Redis address used for rate limiting (e.g. `127.0.0.1:6379`).
+- **`serverPoolInterval`**: Server pool cache refreshing interval (e.g. `5s`).
+- **`serverPoolExpiry`**: Server pool cache expiry duration (e.g. `10s`).
+- **`requestCacheExpiry`**: Response cache expiry duration for request caching (e.g. `20s`). Requires Redis.
+- **`rateLimit`**: Rate limiter config with sub-fields:
+  - **`enable`**: Enable/disable rate limiting.
+  - **`strategy`**: Rate limiting strategy. Valid values: `FW` (Fixed Window), `TB` (Token Bucket).
+  - **`identifier`**: Identifier type for rate limiting. Currently supported: `IP` (by client IP).
+  - **`limit`**: Request limit per window (e.g. `10`).
+  - **`window`**: Time window for rate limit (e.g. `1m`).
+  - **`rate`**: Token generation rate for Token Bucket strategy (tokens per window).
+- **`healthCheck`**: Health check configuration with sub-fields:
+  - **`interval`**: Interval between health checks (e.g. `2s`).
+  - **`maxUnhealthyChecks`**: Number of failed checks before marking server unhealthy.
+  - **`cooldown`**: Duration to wait before retrying a failed health check (e.g. `5s`).
+  - **`maxRestart`**: Maximum number of health check restart attempts before removing server.
+- **`redis`**: Redis address for rate limiting and response caching (e.g. `127.0.0.1:6379`).
 
 Example `config.json` (minimal):
 
 ```json
 {
-  "algorithm": "ROUND_ROBIN",
+  "Id": "load-balancer-1",
+  "algorithm": "RR",
   "port": ":8080",
   "disableLogs": false,
   "servers": ["http://localhost:9001", "http://localhost:9002"],
+  "serverPoolInterval": "5s",
+  "serverPoolExpiry": "10s",
+  "requestCacheExpiry": "0s",
   "rateLimit": { "enable": false }
 }
 ```
