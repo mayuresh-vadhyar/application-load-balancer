@@ -25,20 +25,20 @@ All runtime configuration lives in `config.json`. Key fields:
 - **`weights`**: Parallel array of weights when using weighted round robin.
 - **`serverPoolInterval`**: Server pool cache refreshing interval (e.g. `5s`).
 - **`serverPoolExpiry`**: Server pool cache expiry duration (e.g. `10s`).
-- **`requestCacheExpiry`**: Response cache expiry duration for request caching (e.g. `20s`). Requires Redis.
+- **`requestCacheExpiry`**: API request Response cache expiry duration caching (e.g. `20s`). Requires Redis.
+- **`redis`**: Redis address for rate limiting and response caching (e.g. `127.0.0.1:6379`).
 - **`rateLimit`**: Rate limiter config with sub-fields:
   - **`enable`**: Enable/disable rate limiting.
   - **`strategy`**: Rate limiting strategy. Valid values: `FW` (Fixed Window), `TB` (Token Bucket).
   - **`identifier`**: Identifier type for rate limiting. Currently supported: `IP` (by client IP).
   - **`limit`**: Request limit per window (e.g. `10`).
-  - **`window`**: Time window for rate limit (e.g. `1m`).
+  - **`window`**: Window duration for rate limit (e.g. `1m`).
   - **`rate`**: Token generation rate for Token Bucket strategy (tokens per window).
 - **`healthCheck`**: Health check configuration with sub-fields:
   - **`interval`**: Interval between health checks (e.g. `2s`).
   - **`maxUnhealthyChecks`**: Number of failed checks before marking server unhealthy.
   - **`cooldown`**: Duration to wait before retrying a failed health check (e.g. `5s`).
   - **`maxRestart`**: Maximum number of health check restart attempts before removing server.
-- **`redis`**: Redis address for rate limiting and response caching (e.g. `127.0.0.1:6379`).
 
 Example `config.json` (minimal):
 
@@ -68,7 +68,21 @@ Headers:
 
 **Rate Limiting**
 - Enabled when `config.json` provides a Redis URL and `rateLimit.enable` is `true`.
-- Available strategies: `FixedWindow` (simple counter + expiry) and `TokenBucket` (Lua script in `rateLimiter/token_bucket.lua`).
+- **Available strategies:**
+  - `FixedWindow`: Simple counter + expiry in a fixed time window. Resets counter at the end of each window.
+  - `TokenBucket`: Token-based algorithm via Lua script in `rateLimiter/token_bucket.lua`. Allows burst traffic within token budget.
+- **Identifier support:** Currently supports `IP` (rate limit by client IP address). Defaults to `IP` if not specified or invalid.
+- **Configuration example:**
+  ```json
+  "rateLimit": {
+    "enable": true,
+    "strategy": "TB",
+    "identifier": "IP",
+    "limit": 10,
+    "window": "1m",
+    "rate": 10
+  }
+  ```
 
 **Health Checks**
 - Background routines perform `HEAD` requests to upstreams at the configured `healthCheck.interval`.
