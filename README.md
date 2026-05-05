@@ -7,7 +7,10 @@ Lightweight HTTP load balancer implemented in Go. Routes incoming requests to a 
 - **Health Checks:** Periodic upstream health checks with cooldowns and restart limits.
 - **Server Management API:** Register, list and remove backend servers via `/server` (GET, POST, DELETE).
 - **Proxying:** Proxies requests on `/` to chosen backend and injects `tracking-id` and `X-Forwarded-Server` headers.
-- **Rate Limiting (optional):** Redis-backed strategies like Fixed Window and Token Bucket (Lua script).
+- **Request Logging:** Detailed logging with response time (TAT), status codes, response body size, and target server tracking.
+- **Request Caching:** Redis-backed response caching with configurable expiry for improved performance.
+- **Server Pool Caching:** Cached server list with interval-based updates and expiry configuration.
+- **Rate Limiting (optional):** Redis-backed strategies like Fixed Window and Token Bucket (Lua script) with configurable request identification.
 - **Config-driven:** Behavior controlled by `config.json`.
 
 **Quick Links**
@@ -65,6 +68,21 @@ Example `config.json` (minimal):
 Headers:
 - `tracking-id`: added to both request and response to correlate proxied requests.
 - `X-Forwarded-Server`: indicates the chosen upstream host.
+
+**Request Logging**
+- Enabled by default; disable with `disableLogs` in config.
+- Each request logs: HTTP method, path, target server, response status code, response time (TAT), and response body size.
+- Can be disabled to reduce overhead in high-traffic scenarios.
+
+**Request Caching**
+- Enabled when `config.json` provides a Redis URL and `requestCacheExpiry` is set to a non-zero duration.
+- Caches response bodies based on the request URL and method to reduce backend load.
+- Cache keys are stored in Redis with the configured expiry duration.
+
+**Server Pool Caching**
+- The list of registered servers with their latest status is cached and refreshed at `serverPoolInterval` with a TTL of `serverPoolExpiry`.
+- Reduces memory churn and improves performance for large server pools.
+- Makes it efficient for highly scaling distributed systems
 
 **Rate Limiting**
 - Enabled when `config.json` provides a Redis URL and `rateLimit.enable` is `true`.
