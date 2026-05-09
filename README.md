@@ -7,7 +7,10 @@ Lightweight HTTP load balancer implemented in Go. Routes incoming requests to a 
 - **Health Checks:** Periodic upstream health checks with cooldowns and restart limits.
 - **Server Management API:** Register, list and remove backend servers via `/server` (GET, POST, DELETE).
 - **Proxying:** Proxies requests on `/` to chosen backend and injects `tracking-id` and `X-Forwarded-Server` headers.
-- **Rate Limiting (optional):** Redis-backed strategies like Fixed Window and Token Bucket (Lua script).
+- **Request Logging:** Detailed logging with response time (TAT), status codes, response body size, and target server tracking.
+- **Request Caching:** Redis-backed response caching with configurable expiry for improved performance.
+- **Server Pool Caching:** Cached server list with interval-based updates and expiry configuration.
+- **Rate Limiting (optional):** Redis-backed strategies like Fixed Window and Token Bucket (Lua script) with configurable request identification.
 - **Config-driven:** Behavior controlled by `config.json`.
 
 **Quick Links**
@@ -25,20 +28,20 @@ All runtime configuration lives in `config.json`. Key fields:
 - **`weights`**: Parallel array of weights when using weighted round robin.
 - **`serverPoolInterval`**: Server pool cache refreshing interval (e.g. `5s`).
 - **`serverPoolExpiry`**: Server pool cache expiry duration (e.g. `10s`).
-- **`requestCacheExpiry`**: Response cache expiry duration for request caching (e.g. `20s`). Requires Redis.
+- **`requestCacheExpiry`**: API request Response cache expiry duration caching (e.g. `20s`). Requires Redis.
+- **`redis`**: Redis address for rate limiting and response caching (e.g. `127.0.0.1:6379`).
 - **`rateLimit`**: Rate limiter config with sub-fields:
   - **`enable`**: Enable/disable rate limiting.
   - **`strategy`**: Rate limiting strategy. Valid values: `FW` (Fixed Window), `TB` (Token Bucket).
   - **`identifier`**: Identifier type for rate limiting. Currently supported: `IP` (by client IP).
   - **`limit`**: Request limit per window (e.g. `10`).
-  - **`window`**: Time window for rate limit (e.g. `1m`).
+  - **`window`**: Window duration for rate limit (e.g. `1m`).
   - **`rate`**: Token generation rate for Token Bucket strategy (tokens per window).
 - **`healthCheck`**: Health check configuration with sub-fields:
   - **`interval`**: Interval between health checks (e.g. `2s`).
   - **`maxUnhealthyChecks`**: Number of failed checks before marking server unhealthy.
   - **`cooldown`**: Duration to wait before retrying a failed health check (e.g. `5s`).
   - **`maxRestart`**: Maximum number of health check restart attempts before removing server.
-- **`redis`**: Redis address for rate limiting and response caching (e.g. `127.0.0.1:6379`).
 
 Example `config.json` (minimal):
 
@@ -66,9 +69,38 @@ Headers:
 - `tracking-id`: added to both request and response to correlate proxied requests.
 - `X-Forwarded-Server`: indicates the chosen upstream host.
 
+**Request Logging**
+- Enabled by default; disable with `disableLogs` in config.
+- Each request logs: HTTP method, path, target server, response status code, response time (TAT), and response body size.
+- Can be disabled to reduce overhead in high-traffic scenarios.
+
+**Request Caching**
+- Enabled when `config.json` provides a Redis URL and `requestCacheExpiry` is set to a non-zero duration.
+- Caches response bodies based on the request URL and method to reduce backend load.
+- Cache keys are stored in Redis with the configured expiry duration.
+
+**Server Pool Caching**
+- The list of registered servers with their latest status is cached and refreshed at `serverPoolInterval` with a TTL of `serverPoolExpiry`.
+- Reduces memory churn and improves performance for large server pools.
+- Makes it efficient for highly scaling distributed systems
+
 **Rate Limiting**
 - Enabled when `config.json` provides a Redis URL and `rateLimit.enable` is `true`.
-- Available strategies: `FixedWindow` (simple counter + expiry) and `TokenBucket` (Lua script in `rateLimiter/token_bucket.lua`).
+- **Available strategies:**
+  - `FixedWindow`: Simple counter + expiry in a fixed time window. Resets counter at the end of each window.
+  - `TokenBucket`: Token-based algorithm via Lua script in `rateLimiter/token_bucket.lua`. Allows burst traffic within token budget.
+- **Identifier support:** Currently supports `IP` (rate limit by client IP address). Defaults to `IP` if not specified or invalid.
+- **Configuration example:**
+  ```json
+  "rateLimit": {
+    "enable": true,
+    "strategy": "TB",
+    "identifier": "IP",
+    "limit": 10,
+    "window": "1m",
+    "rate": 10
+  }
+  ```
 
 **Health Checks**
 - Background routines perform `HEAD` requests to upstreams at the configured `healthCheck.interval`.
