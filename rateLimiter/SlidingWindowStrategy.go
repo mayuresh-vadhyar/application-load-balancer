@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
-type SlidingWindowStrategy struct {}
+type SlidingWindowStrategy struct{}
 
 func (strategy SlidingWindowStrategy) AllowRequest(rl RateLimiter, key string) (bool, error) {
 	now := time.Now().UnixNano()
@@ -15,14 +16,13 @@ func (strategy SlidingWindowStrategy) AllowRequest(rl RateLimiter, key string) (
 	pipe := rl.client.TxPipeline()
 
 	pipe.ZRemRangeByScore(ctx, key, "0", fmt.Sprintf("%d", windowStart))
-	// TODO: replace with Member: uuid.New().String()
-	pipe.ZAdd(ctx,key,redis.Z{
-		Score: float64(now),
-		Member: now,
+	pipe.ZAdd(ctx, key, redis.Z{
+		Score:  float64(now),
+		Member: uuid.New().String(),
 	})
 	count := pipe.ZCard(ctx, key)
 	pipe.Expire(ctx, key, rl.window)
-	
+
 	_, err := pipe.Exec(ctx)
 	if err != nil {
 		return false, err
@@ -32,5 +32,5 @@ func (strategy SlidingWindowStrategy) AllowRequest(rl RateLimiter, key string) (
 		return false, nil
 	}
 
-	return  true, nil
+	return true, nil
 }
