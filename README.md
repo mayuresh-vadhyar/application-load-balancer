@@ -103,8 +103,11 @@ Headers:
   ```
 
 **Health Checks**
-- Background routines perform `HEAD` requests to upstreams at the configured `healthCheck.interval`.
-- Servers failing checks are marked unhealthy; configurable cooldown and restart behavior govern removal and retries.
+- Background routines perform periodic `HEAD` requests to upstream servers at the configured `healthCheck.interval`.
+- Servers failing checks are marked unhealthy and isolated from load balancing.
+- After a server is marked unhealthy, it waits for `healthCheck.cooldown` before attempting recovery.
+- Each failed recovery attempt is tracked; if `healthCheck.maxRestart` restarts are exhausted, the server is permanently removed from the pool.
+- A server is marked unhealthy after `healthCheck.maxUnhealthyChecks` consecutive failed checks.
 
 **Build & Run**
 Requires Go (>=1.20) and, if using rate limiting, a running Redis instance.
@@ -122,12 +125,15 @@ go run main.go
 There is also `go-start.bat` included for a quick start on Windows.
 
 **Project Layout (high level)**
-- `main.go` — HTTP server, routing, initialization.
-- `LoadBalancingStrategy.go`, `RoundRobinStrategy.go`, `WeightedRoundRobinStrategy.go`, `IPHashStrategy.go`, `URLHashStrategy.go` — load balancing code.
-- `server/` — server registration, health checks, reverse proxy handling.
-- `rateLimiter/` — Redis-based rate limiting strategies and Lua script.
-- `config/` — configuration parsing.
-- `Response/` — helper responses for success/error.
+- `main.go` — HTTP server, routing, initialization, request caching calls.
+- `LogResponseWriter.go` — Custom response writer for capturing and logging response metadata (status, size, timing).
+- `loadBalancerStrategy/` — Load balancing algorithm implementations (Round Robin, Weighted, IP Hash, URL Hash).
+- `server/` — Server registration, health checks, reverse proxy handling.
+- `rateLimiter/` — Redis-based rate limiting strategies (Fixed Window, Token Bucket) and Lua scripts.
+- `config/` — Configuration parsing from `config.json`.
+- `Response/` — Helper functions for JSON response formatting (success/error responses).
+- `Redis/` — Redis client initialization and connection management.
+- `constants/` — Algorithm and strategy constants.
 
 **Next steps & Notes**
 - To enable rate limiting, set `rateLimit.enable` to `true` and provide a reachable `redis` address in `config.json`.
