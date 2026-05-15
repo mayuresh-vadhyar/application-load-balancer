@@ -34,3 +34,11 @@ func (strategy SlidingWindowStrategy) AllowRequest(rl RateLimiter, key string) (
 
 	return true, nil
 }
+
+func (strategy SlidingWindowStrategy) init() {
+	data, err := os.ReadFile("rateLimiter/sliding_window.lua")
+	if err != nil {
+		log.Fatal(err)
+	}
+	slidingWindowLuaScript = string(data)
+}
