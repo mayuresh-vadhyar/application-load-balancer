@@ -1,38 +1,27 @@
 package rateLimiter
 
 import (
-	"fmt"
+	"log"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 )
+
+var slidingWindowLuaScript string
 
 type SlidingWindowStrategy struct{}
 
 func (strategy SlidingWindowStrategy) AllowRequest(rl RateLimiter, key string) (bool, error) {
-	now := time.Now().UnixNano()
-	windowStart := now - rl.window.Nanoseconds()
-	pipe := rl.client.TxPipeline()
+	now := time.Now().UnixMilli()
+	member := uuid.New().String()
 
-	pipe.ZRemRangeByScore(ctx, key, "0", fmt.Sprintf("%d", windowStart))
-	pipe.ZAdd(ctx, key, redis.Z{
-		Score:  float64(now),
-		Member: uuid.New().String(),
-	})
-	count := pipe.ZCard(ctx, key)
-	pipe.Expire(ctx, key, rl.window)
-
-	_, err := pipe.Exec(ctx)
+	res, err := rl.client.Eval(ctx, slidingWindowLuaScript, []string{key}, rl.limit, rl.window.Milliseconds(), now, member).Result()
 	if err != nil {
 		return false, err
 	}
 
-	if count.Val() > int64(rl.limit) {
-		return false, nil
-	}
-
-	return true, nil
+	return res == "ALLOW", nil
 }
 
 func (strategy SlidingWindowStrategy) init() {
