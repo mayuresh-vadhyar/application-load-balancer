@@ -12,8 +12,9 @@ type RateLimitStrategy interface {
 }
 
 const (
-	FIXED_WINDOW = "FW"
-	TOKEN_BUCKET = "TB"
+	FIXED_WINDOW   = "FW"
+	TOKEN_BUCKET   = "TB"
+	SLIDING_WINDOW = "SW"
 )
 
 func GetRateLimitStrategy(config RateLimitConfig) RateLimitStrategy {
@@ -30,6 +31,10 @@ func GetRateLimitStrategy(config RateLimitConfig) RateLimitStrategy {
 			log.Fatalf("Token bucket refill rate missing")
 		}
 		strategy := &TokenBucketStrategy{rate: config.Rate}
+		strategy.init()
+		return strategy
+	case SLIDING_WINDOW:
+		strategy := &SlidingWindowStrategy{}
 		strategy.init()
 		return strategy
 	}
