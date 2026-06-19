@@ -10,12 +10,12 @@ Lightweight HTTP load balancer implemented in Go. Routes incoming requests to a 
 - **Request Logging:** Detailed logging with response time (TAT), status codes, response body size, and target server tracking.
 - **Request Caching:** Redis-backed response caching with configurable expiry for improved performance.
 - **Server Pool Caching:** Cached server list with interval-based updates and expiry configuration.
-- **Rate Limiting (optional):** Redis-backed strategies like Fixed Window and Token Bucket (Lua script) with configurable request identification.
+- **Rate Limiting (optional):** Redis-backed strategies like Fixed Window, Token Bucket, Leaky Bucket and Sliding Window (Lua script) with configurable request identification.
 - **Config-driven:** Behavior controlled by `config.json`.
 
 **Quick Links**
 - Config: [config.json](config.json)
-- Rate limiter Lua script: [rateLimiter/token_bucket.lua](rateLimiter/token_bucket.lua)
+- Rate limiter Lua scripts: [rateLimiter/token_bucket.lua](rateLimiter/token_bucket.lua), [rateLimiter/sliding_window.lua](rateLimiter/sliding_window.lua)
 
 **Configuration**
 All runtime configuration lives in `config.json`. Key fields:
@@ -32,7 +32,7 @@ All runtime configuration lives in `config.json`. Key fields:
 - **`redis`**: Redis address for rate limiting and response caching (e.g. `127.0.0.1:6379`).
 - **`rateLimit`**: Rate limiter config with sub-fields:
   - **`enable`**: Enable/disable rate limiting.
-  - **`strategy`**: Rate limiting strategy. Valid values: `FW` (Fixed Window), `TB` (Token Bucket).
+  - **`strategy`**: Rate limiting strategy. Valid values: `FW` (Fixed Window), `TB` (Token Bucket), `LB` (Leaky Bucket) `SW` (Sliding Window).
   - **`identifier`**: Identifier type for rate limiting. Currently supported: `IP` (by client IP).
   - **`limit`**: Request limit per window (e.g. `10`).
   - **`window`**: Window duration for rate limit (e.g. `1m`).

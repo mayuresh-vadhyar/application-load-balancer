@@ -15,6 +15,7 @@ const (
 	FIXED_WINDOW   = "FW"
 	TOKEN_BUCKET   = "TB"
 	SLIDING_WINDOW = "SW"
+	LEAKY_BUCKET   = "LB"
 )
 
 func GetRateLimitStrategy(config RateLimitConfig) RateLimitStrategy {
@@ -37,6 +38,8 @@ func GetRateLimitStrategy(config RateLimitConfig) RateLimitStrategy {
 		strategy := &SlidingWindowStrategy{}
 		strategy.init()
 		return strategy
+	case LEAKY_BUCKET:
+		return &LeakyBucketStrategy{}
 	}
 	return nil
 }
