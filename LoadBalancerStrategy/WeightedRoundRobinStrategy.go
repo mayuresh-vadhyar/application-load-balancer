@@ -19,7 +19,7 @@ func (lb *WeightedRoundRobinStrategy) CreateServerList(config Config) []*Server 
 	countOfServers := len(serverUrls)
 
 	if weights == nil {
-		weights := make([]int, countOfServers)
+		weights = make([]int, countOfServers)
 		for i := range weights {
 			weights[i] = 1
 		}
@@ -30,8 +30,10 @@ func (lb *WeightedRoundRobinStrategy) CreateServerList(config Config) []*Server 
 			continue
 		}
 		server.Servers = append(server.Servers, item)
+		server.AddServer(item)
 	}
 
+	// return server.GetServers()
 	return server.Servers
 }
 

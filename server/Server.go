@@ -54,11 +54,40 @@ var maxUnhealthyChecks int8 = -1
 var idMutex sync.Mutex
 var lastId int = 0
 
+type serverList struct {
+	sync.RWMutex
+	servers []*Server
+}
+
+var activeServers = &serverList{}
+
 func getNextId() int {
 	idMutex.Lock()
 	defer idMutex.Unlock()
 	lastId++
 	return lastId
+}
+
+func (list *serverList) getAll() []*Server {
+	list.RLock()
+	defer list.RUnlock()
+	servers := make([]*Server, len(list.servers))
+	copy(servers, list.servers)
+	return servers
+}
+
+func (list *serverList) add(s *Server) {
+	list.Lock()
+	defer list.Unlock()
+	list.servers = append(list.servers, s)
+}
+
+func AddServer(s *Server) {
+	activeServers.add(s)
+}
+
+func GetServers() []*Server {
+	return activeServers.getAll()
 }
 
 func CreateServer(rawUrl string) (*Server, error) {

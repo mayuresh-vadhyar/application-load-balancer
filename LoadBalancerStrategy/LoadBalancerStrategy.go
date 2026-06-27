@@ -26,9 +26,11 @@ func CreateServerList(config Config) []*Server {
 			continue
 		}
 		server.Servers = append(server.Servers, item)
+		server.AddServer(item)
 	}
 
 	return server.Servers
+	// return server.GetServers()
 }
 
 func GetLoadBalancingStrategy(algorithm string) LoadBalancingStrategy {
