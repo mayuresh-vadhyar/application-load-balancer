@@ -82,6 +82,37 @@ func (list *serverList) add(s *Server) {
 	list.servers = append(list.servers, s)
 }
 
+func (list *serverList) replace(servers []*Server) {
+	list.Lock()
+	defer list.Unlock()
+	list.servers = make([]*Server, len(servers))
+	copy(list.servers, servers)
+}
+
+func (list *serverList) findByURL(targetUrl string) *Server {
+	list.RLock()
+	defer list.RUnlock()
+	for _, item := range list.servers {
+		if item.URL.String() == targetUrl {
+			return item
+		}
+	}
+	return nil
+}
+
+func (list *serverList) removeByURL(targetUrl string) bool {
+	list.Lock()
+	defer list.Unlock()
+	for i, item := range list.servers {
+		if item.URL.String() == targetUrl {
+			item.StopHealthCheck()
+			list.servers = slices.Delete(list.servers, i, i+1)
+			return true
+		}
+	}
+	return false
+}
+
 func AddServer(s *Server) {
 	activeServers.add(s)
 }
