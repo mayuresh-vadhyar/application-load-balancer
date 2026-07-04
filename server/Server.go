@@ -121,6 +121,21 @@ func GetServers() []*Server {
 	return activeServers.getAll()
 }
 
+func SetServers(servers []*Server) {
+	activeServers.replace(servers)
+}
+func FindServerByURL(targetUrl string) *Server {
+	return activeServers.findByURL(targetUrl)
+}
+
+func ServerExists(targetUrl string) bool {
+	return activeServers.findByURL(targetUrl) != nil
+}
+
+func DeleteServer(targetUrl string) bool {
+	return activeServers.removeByURL(targetUrl)
+}
+
 func CreateServer(rawUrl string) (*Server, error) {
 	parsedUrl, err := url.Parse(rawUrl)
 	if err != nil {
@@ -137,17 +152,6 @@ func CreateServer(rawUrl string) (*Server, error) {
 	go StartHealthCheckRoutine(ctx, server, maxRestart)
 
 	return server, nil
-}
-
-func DeleteServer(targetUrl string) bool {
-	for i, item := range Servers {
-		if item.URL.String() == targetUrl {
-			item.StopHealthCheck()
-			Servers = slices.Delete(Servers, i, i+1)
-			return true
-		}
-	}
-	return false
 }
 
 func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
