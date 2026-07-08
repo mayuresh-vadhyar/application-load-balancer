@@ -33,7 +33,7 @@ func getServer(w http.ResponseWriter, r *http.Request) {
 	isHealthyParam := query.Get("isHealthy")
 	urlParam := query.Get("urlParam")
 
-	for _, s := range server.Servers {
+	for _, s := range server.GetServers() {
 		match := true
 
 		if isHealthyParam != "" {
@@ -62,7 +62,7 @@ func registerServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, item := range server.Servers {
+	for _, item := range server.GetServers() {
 		if item.URL.String() == newServer.Url {
 			Response.WriteErrorResponse(w, http.StatusFound, "Server already registered")
 			return
@@ -75,7 +75,7 @@ func registerServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	server.Servers = append(server.Servers, item)
+	server.AddServer(item)
 	Response.WriteSuccessResponse(w, http.StatusCreated, item)
 }
 
@@ -169,7 +169,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 	}
 
-	server := lb.GetNextServer(server.Servers, r)
+	server := lb.GetNextServer(server.GetServers(), r)
 	if server == nil {
 		Response.WriteErrorResponse(w, http.StatusServiceUnavailable, "No healthy server available")
 		return
@@ -207,7 +207,7 @@ func main() {
 	InitializeLogResponseWriter(config.DisableLogs)
 	server.InitializeHealthCheckConfig(config.HealthCheck)
 	server.StartServerPoolLogRoutine(config)
-	server.Servers = lb.CreateServerList(config)
+	server.SetServers(lb.CreateServerList(config))
 	InitializeRequestCaching(config.RequestCacheExpiry)
 	rl := rateLimiter.GetRateLimiter()
 	client = Redis.GetClient()

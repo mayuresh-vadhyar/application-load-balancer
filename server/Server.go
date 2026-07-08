@@ -45,7 +45,6 @@ type ServerPayload struct {
 type HealthCheckConfig = config.HealthCheckConfig
 type Config = config.Config
 
-var Servers []*Server
 var interval time.Duration
 var cooldown time.Duration
 var maxRestart int8
@@ -252,7 +251,7 @@ func StartServerPoolLogRoutine(config Config) {
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				servers, err := json.Marshal(Servers)
+				servers, err := json.Marshal(GetServers())
 				if err != nil {
 					log.Printf("Error parsing servers for server pool: %v", err)
 				}
