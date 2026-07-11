@@ -29,12 +29,10 @@ func (lb *WeightedRoundRobinStrategy) CreateServerList(config Config) []*Server 
 		if err != nil {
 			continue
 		}
-		server.Servers = append(server.Servers, item)
 		server.AddServer(item)
 	}
 
-	// return server.GetServers()
-	return server.Servers
+	return server.GetServers()
 }
 
 func (lb *WeightedRoundRobinStrategy) GetNextServer(servers []*Server, r *http.Request) *Server {
