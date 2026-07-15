@@ -24,6 +24,7 @@ type Server struct {
 	Mutex           sync.Mutex         `json:"-"`
 	StopHealthCheck context.CancelFunc `json:"-"`
 	UnhealthyChecks int8               `json:"unhealthyChecks"`
+	RequestCount    int64              `json:"requestCount"`
 }
 
 func (m Server) MarshalJSON() ([]byte, error) {
@@ -198,6 +199,12 @@ func (s *Server) markUnhealthy() {
 	defer s.Mutex.Unlock()
 	s.UnhealthyChecks++
 	s.IsHealthy = false
+}
+
+func (s *Server) IncrementRequestCount() {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+	s.RequestCount++
 }
 
 func InitializeHealthCheckConfig(healthCheckConfig HealthCheckConfig) {
