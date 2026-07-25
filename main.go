@@ -22,6 +22,18 @@ import (
 type Server = server.Server
 type LoadBalancingStrategy = loadBalancerStrategy.LoadBalancingStrategy
 
+type serverStatsEntry struct {
+	ID           int    `json:"id"`
+	URL          string `json:"url"`
+	IsHealthy    bool   `json:"isHealthy"`
+	RequestCount int64  `json:"requestCount"`
+}
+
+type serverStatsResponse struct {
+	Status string             `json:"status"`
+	Data   []serverStatsEntry `json:"data"`
+}
+
 var lb LoadBalancingStrategy
 var client *redis.Client
 var requestCacheExpiry time.Duration
@@ -105,6 +117,27 @@ func serverHandler(w http.ResponseWriter, r *http.Request) {
 		deregisterServer(w, r)
 	default:
 		Response.WriteErrorResponse(w, http.StatusMethodNotAllowed, "Method Not Allowed")
+	}
+}
+
+func getServerStats(w http.ResponseWriter, r *http.Request) {
+	stats := make([]serverStatsEntry, 0, len(server.GetServers()))
+
+	for _, item := range server.GetServers() {
+		item.Mutex.Lock()
+		stats = append(stats, serverStatsEntry{
+			ID:           item.Id,
+			URL:          item.URL.String(),
+			IsHealthy:    item.IsHealthy,
+			RequestCount: item.RequestCount,
+		})
+		item.Mutex.Unlock()
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if encodeErr := json.NewEncoder(w).Encode(serverStatsResponse{Status: "success", Data: stats}); encodeErr != nil {
+		Response.WriteErrorResponse(w, http.StatusInternalServerError, encodeErr.Error())
 	}
 }
 
