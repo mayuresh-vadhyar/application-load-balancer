@@ -107,6 +107,15 @@ func deregisterServer(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 }
 
+func serverStatsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		Response.WriteErrorResponse(w, http.StatusMethodNotAllowed, "Method Not Allowed")
+		return
+	}
+
+	getServerStats(w, r)
+}
+
 func serverHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -208,6 +217,8 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	server.IncrementRequestCount()
+
 	hash, _ := generateHash()
 	r.Header.Add("tracking-id", hash)
 	w.Header().Add("tracking-id", hash)
@@ -247,6 +258,7 @@ func main() {
 
 	http.Handle("/", loggingMiddleware(http.HandlerFunc(proxyHandler)))
 	http.HandleFunc("/server", serverHandler)
+	http.HandleFunc("/server/stats", serverStatsHandler)
 
 	log.Println("Starting load balancer on port", config.Port)
 	var err error
