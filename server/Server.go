@@ -25,6 +25,7 @@ type Server struct {
 	StopHealthCheck context.CancelFunc `json:"-"`
 	UnhealthyChecks int8               `json:"unhealthyChecks"`
 	RequestCount    int64              `json:"requestCount"`
+	ActiveReqCount  int64              `json:"activeRequestCount"`
 }
 
 func (m Server) MarshalJSON() ([]byte, error) {
@@ -205,6 +206,7 @@ func (s *Server) IncrementRequestCount() {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 	s.RequestCount++
+	s.ActiveReqCount++
 }
 
 func InitializeHealthCheckConfig(healthCheckConfig HealthCheckConfig) {

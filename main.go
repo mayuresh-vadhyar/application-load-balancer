@@ -23,10 +23,11 @@ type Server = server.Server
 type LoadBalancingStrategy = loadBalancerStrategy.LoadBalancingStrategy
 
 type serverStatsEntry struct {
-	ID           int    `json:"id"`
-	URL          string `json:"url"`
-	IsHealthy    bool   `json:"isHealthy"`
-	RequestCount int64  `json:"requestCount"`
+	ID             int    `json:"id"`
+	URL            string `json:"url"`
+	IsHealthy      bool   `json:"isHealthy"`
+	RequestCount   int64  `json:"requestCount"`
+	ActiveReqCount int64  `json:"activeReqCount"`
 }
 
 type serverStatsResponse struct {
@@ -135,10 +136,11 @@ func getServerStats(w http.ResponseWriter, r *http.Request) {
 	for _, item := range server.GetServers() {
 		item.Mutex.Lock()
 		stats = append(stats, serverStatsEntry{
-			ID:           item.Id,
-			URL:          item.URL.String(),
-			IsHealthy:    item.IsHealthy,
-			RequestCount: item.RequestCount,
+			ID:             item.Id,
+			URL:            item.URL.String(),
+			IsHealthy:      item.IsHealthy,
+			RequestCount:   item.RequestCount,
+			ActiveReqCount: item.ActiveReqCount,
 		})
 		item.Mutex.Unlock()
 	}
