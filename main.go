@@ -220,6 +220,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	server.IncrementRequestCount()
+	defer server.DecrementActiveRequestCount()
 
 	hash, _ := generateHash()
 	r.Header.Add("tracking-id", hash)

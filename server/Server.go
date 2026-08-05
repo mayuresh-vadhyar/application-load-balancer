@@ -202,6 +202,14 @@ func (s *Server) markUnhealthy() {
 	s.IsHealthy = false
 }
 
+func (s *Server) DecrementActiveRequestCount() {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+	if s.ActiveReqCount > 0 {
+		s.ActiveReqCount--
+	}
+}
+
 func (s *Server) IncrementRequestCount() {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
