@@ -87,9 +87,11 @@ Headers:
 **Rate Limiting**
 - Enabled when `config.json` provides a Redis URL and `rateLimit.enable` is `true`.
 - **Available strategies:**
-  - `FixedWindow`: Simple counter + expiry in a fixed time window. Resets counter at the end of each window.
-  - `TokenBucket`: Token-based algorithm via Lua script in `rateLimiter/token_bucket.lua`. Allows burst traffic within token budget.
-- **Identifier support:** Currently supports `IP` (rate limit by client IP address). Defaults to `IP` if not specified or invalid.
+  - `FixedWindow` (`FW`): Simple counter + expiry in a fixed time window. Resets counter at the end of each window.
+  - `TokenBucket` (`TB`): Token-based algorithm via Lua script in `rateLimiter/token_bucket.lua`. Allows burst traffic within token budget.
+  - `LeakyBucket` (`LB`): Leaky bucket algorithm. Smooths out bursty traffic by processing requests at a constant drain rate.
+  - `SlidingWindow` (`SW`): Precise sliding window counter via Lua script in `rateLimiter/sliding_window.lua`. Avoids boundary spikes of fixed windows.
+- **Identifier support:** Controls what value is used as the rate limit key. Supported values: `IP` (client IP), `ApiKey` (`X-API-Key` header), `UserID` (`X-User-ID` header), `ApiPath` (request URL path), `Resource` (first path segment). Defaults to `IP` if not specified or invalid.
 - **Configuration example:**
   ```json
   "rateLimit": {
@@ -129,7 +131,7 @@ There is also `go-start.bat` included for a quick start on Windows.
 - `LogResponseWriter.go` — Custom response writer for capturing and logging response metadata (status, size, timing).
 - `loadBalancerStrategy/` — Load balancing algorithm implementations (Round Robin, Weighted, IP Hash, URL Hash).
 - `server/` — Server registration, health checks, reverse proxy handling.
-- `rateLimiter/` — Redis-based rate limiting strategies (Fixed Window, Token Bucket) and Lua scripts.
+- `rateLimiter/` — Redis-based rate limiting strategies (Fixed Window, Token Bucket, Leaky Bucket, Sliding Window) and Lua scripts.
 - `config/` — Configuration parsing from `config.json`.
 - `Response/` — Helper functions for JSON response formatting (success/error responses).
 - `Redis/` — Redis client initialization and connection management.
