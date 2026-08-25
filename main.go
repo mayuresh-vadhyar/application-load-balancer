@@ -262,6 +262,7 @@ func main() {
 	http.Handle("/", loggingMiddleware(http.HandlerFunc(proxyHandler)))
 	http.HandleFunc("/server", serverHandler)
 	http.HandleFunc("/server/stats", serverStatsHandler)
+	http.HandleFunc("/server/dashboard", serverDashboardHandler)
 
 	log.Println("Starting load balancer on port", config.Port)
 	var err error

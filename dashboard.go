@@ -2,7 +2,9 @@ package main
 
 import (
 	"html/template"
+	"net/http"
 
+	"github.com/mayuresh-vadhyar/application-load-balancer/Response"
 	"github.com/mayuresh-vadhyar/application-load-balancer/server"
 )
 
@@ -54,4 +56,19 @@ func collectServerStats() []serverStatsEntry {
 		item.Mutex.Unlock()
 	}
 	return stats
+}
+
+func serverDashboardHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		Response.WriteErrorResponse(w, http.StatusMethodNotAllowed, "Method Not Allowed")
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := dashboardTemplate.Execute(w, dashboardPageData{
+		Title: "Server Stats Dashboard",
+		Rows:  collectServerStats(),
+	}); err != nil {
+		Response.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+	}
 }
