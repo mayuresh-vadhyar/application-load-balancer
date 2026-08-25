@@ -63,11 +63,13 @@ Example `config.json` (minimal):
 - `GET /server` : List registered servers. Supports query params `isHealthy` and `urlParam`.
 - `POST /server` : Register a new server. Body: `{ "url": "http://<host>:<port>", "weight": <int> }`.
 - `DELETE /server` : Remove a server. Body: `{ "url": "http://<host>:<port>" }`.
+- `GET /server/stats` : Return per-server stats including request count, active request count, and health status.
 - `GET /` : Main proxy endpoint — forwards requests to upstream hosts.
 
 Headers:
 - `tracking-id`: added to both request and response to correlate proxied requests.
 - `X-Forwarded-Server`: indicates the chosen upstream host.
+- `X-Cache-Hit: true`: set on responses served from the Redis cache.
 
 **Request Logging**
 - Enabled by default; disable with `disableLogs` in config.
@@ -76,8 +78,9 @@ Headers:
 
 **Request Caching**
 - Enabled when `config.json` provides a Redis URL and `requestCacheExpiry` is set to a non-zero duration.
-- Caches response bodies based on the request URL and method to reduce backend load.
+- Caches response bodies based on the request URL path and query string to reduce backend load.
 - Cache keys are stored in Redis with the configured expiry duration.
+- Requests with `Cache-Control: no-cache` bypass the cache and are always forwarded to the upstream.
 
 **Server Pool Caching**
 - The list of registered servers with their latest status is cached and refreshed at `serverPoolInterval` with a TTL of `serverPoolExpiry`.
@@ -87,9 +90,11 @@ Headers:
 **Rate Limiting**
 - Enabled when `config.json` provides a Redis URL and `rateLimit.enable` is `true`.
 - **Available strategies:**
-  - `FixedWindow`: Simple counter + expiry in a fixed time window. Resets counter at the end of each window.
-  - `TokenBucket`: Token-based algorithm via Lua script in `rateLimiter/token_bucket.lua`. Allows burst traffic within token budget.
-- **Identifier support:** Currently supports `IP` (rate limit by client IP address). Defaults to `IP` if not specified or invalid.
+  - `FixedWindow` (`FW`): Simple counter + expiry in a fixed time window. Resets counter at the end of each window.
+  - `TokenBucket` (`TB`): Token-based algorithm via Lua script in `rateLimiter/token_bucket.lua`. Allows burst traffic within token budget.
+  - `LeakyBucket` (`LB`): Leaky bucket algorithm. Smooths out bursty traffic by processing requests at a constant drain rate.
+  - `SlidingWindow` (`SW`): Precise sliding window counter via Lua script in `rateLimiter/sliding_window.lua`. Avoids boundary spikes of fixed windows.
+- **Identifier support:** Controls what value is used as the rate limit key. Supported values: `IP` (client IP), `ApiKey` (`X-API-Key` header), `UserID` (`X-User-ID` header), `ApiPath` (request URL path), `Resource` (first path segment). Defaults to `IP` if not specified or invalid.
 - **Configuration example:**
   ```json
   "rateLimit": {
@@ -126,10 +131,11 @@ There is also `go-start.bat` included for a quick start on Windows.
 
 **Project Layout (high level)**
 - `main.go` — HTTP server, routing, initialization, request caching calls.
+- `dashboard.go` — Server stats dashboard: collects per-server metrics (request count, active requests, health) and renders an HTML view.
 - `LogResponseWriter.go` — Custom response writer for capturing and logging response metadata (status, size, timing).
 - `loadBalancerStrategy/` — Load balancing algorithm implementations (Round Robin, Weighted, IP Hash, URL Hash).
 - `server/` — Server registration, health checks, reverse proxy handling.
-- `rateLimiter/` — Redis-based rate limiting strategies (Fixed Window, Token Bucket) and Lua scripts.
+- `rateLimiter/` — Redis-based rate limiting strategies (Fixed Window, Token Bucket, Leaky Bucket, Sliding Window) and Lua scripts.
 - `config/` — Configuration parsing from `config.json`.
 - `Response/` — Helper functions for JSON response formatting (success/error responses).
 - `Redis/` — Redis client initialization and connection management.
