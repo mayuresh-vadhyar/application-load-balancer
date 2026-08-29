@@ -22,14 +22,6 @@ import (
 type Server = server.Server
 type LoadBalancingStrategy = loadBalancerStrategy.LoadBalancingStrategy
 
-type serverStatsEntry struct {
-	ID             int    `json:"id"`
-	URL            string `json:"url"`
-	IsHealthy      bool   `json:"isHealthy"`
-	RequestCount   int64  `json:"requestCount"`
-	ActiveReqCount int64  `json:"activeReqCount"`
-}
-
 type serverStatsResponse struct {
 	Status string             `json:"status"`
 	Data   []serverStatsEntry `json:"data"`

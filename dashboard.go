@@ -13,6 +13,14 @@ const dashboardHTML = `<!DOCTYPE html>
 <head>
 	<meta charset="UTF-8">
 	<title>{{ .Title }}</title>
+	<style>
+		table { border-collapse: collapse; width: 100%; }
+		th, td { border: 1px solid #ddd; padding: 8px; }
+		th { background-color: #f2f2f2; text-align: left; }
+		tr:nth-child(even) { background-color: #fbfbfb; }
+		.status-healthy { color: #155724; font-weight: bold; }
+		.status-unhealthy { color: #721c24; font-weight: bold; }
+	</style>
 </head>
 <body>
 	<h1>{{ .Title }}</h1>
@@ -21,6 +29,9 @@ const dashboardHTML = `<!DOCTYPE html>
 			<tr>
 				<th>ID</th>
 				<th>URL</th>
+				<th>Healthy</th>
+				<th>Total Requests</th>
+				<th>Active Requests</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -28,6 +39,9 @@ const dashboardHTML = `<!DOCTYPE html>
 			<tr>
 				<td>{{ .ID }}</td>
 				<td>{{ .URL }}</td>
+				<td class="status-{{ if .IsHealthy }}healthy{{ else }}unhealthy{{ end }}">{{ if .IsHealthy }}Healthy{{ else }}Unhealthy{{ end }}</td>
+				<td>{{ .RequestCount }}</td>
+				<td>{{ .ActiveReqCount }}</td>
 			</tr>
 			{{- end }}
 		</tbody>
@@ -40,6 +54,14 @@ var dashboardTemplate = template.Must(template.New("dashboard").Parse(dashboardH
 type dashboardPageData struct {
 	Title string
 	Rows  []serverStatsEntry
+}
+
+type serverStatsEntry struct {
+	ID             int    `json:"id"`
+	URL            string `json:"url"`
+	IsHealthy      bool   `json:"isHealthy"`
+	RequestCount   int64  `json:"requestCount"`
+	ActiveReqCount int64  `json:"activeReqCount"`
 }
 
 func collectServerStats() []serverStatsEntry {
