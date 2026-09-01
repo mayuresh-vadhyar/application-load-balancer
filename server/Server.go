@@ -175,6 +175,30 @@ func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
 	return server, nil
 }
 
+func RecreateServer(obj Server) (*Server, error) {
+	parsedUrl, err := url.Parse(obj.URL.String())
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	server := &Server{
+		Id:              obj.Id,
+		URL:             parsedUrl,
+		IsHealthy:       obj.IsHealthy,
+		StopHealthCheck: cancel,
+		UnhealthyChecks: obj.UnhealthyChecks,
+		RequestCount:    obj.RequestCount,
+		ActiveReqCount:  obj.ActiveReqCount,
+		// TODO: omit if empty
+		Weight:        obj.Weight,
+		CurrentWeight: obj.CurrentWeight,
+	}
+	go StartHealthCheckRoutine(ctx, server, maxRestart)
+
+	return server, nil
+}
+
 func (s *Server) ReverseProxy() *httputil.ReverseProxy {
 	proxy := httputil.NewSingleHostReverseProxy(s.URL)
 
