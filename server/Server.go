@@ -28,6 +28,17 @@ type Server struct {
 	ActiveReqCount  int64              `json:"activeRequestCount"`
 }
 
+type ServerPoolServer struct {
+	Id              int    `json:"id"`
+	IsHealthy       bool   `json:"isHealthy"`
+	Weight          int    `json:"weight"`
+	CurrentWeight   int    `json:"currentWeight"`
+	UnhealthyChecks int8   `json:"unhealthyChecks"`
+	RequestCount    int64  `json:"requestCount"`
+	ActiveReqCount  int64  `json:"activeRequestCount"`
+	URL             string `json:"url"`
+}
+
 func (m Server) MarshalJSON() ([]byte, error) {
 	type Alias Server
 	return json.Marshal(&struct {
@@ -292,7 +303,20 @@ func StartServerPoolLogRoutine(config Config) {
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				servers, err := json.Marshal(GetServers())
+				poolServers := make([]ServerPoolServer, 0, len(GetServers()))
+				for _, server := range GetServers() {
+					poolServers = append(poolServers, ServerPoolServer{
+						Id:              server.Id,
+						IsHealthy:       server.IsHealthy,
+						Weight:          server.Weight,
+						UnhealthyChecks: server.UnhealthyChecks,
+						RequestCount:    server.RequestCount,
+						ActiveReqCount:  server.ActiveReqCount,
+						URL:             server.URL.Host,
+					})
+				}
+
+				servers, err := json.Marshal(poolServers)
 				if err != nil {
 					log.Printf("Error parsing servers for server pool: %v", err)
 				}
