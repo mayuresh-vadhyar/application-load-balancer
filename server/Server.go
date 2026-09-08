@@ -273,6 +273,25 @@ func InitializeHealthCheckConfig(healthCheckConfig HealthCheckConfig) {
 		}
 	})
 }
+func getServerPoolKey(id string) string {
+	return "SERVER_POOL:" + id
+}
+
+func getServerDataFromPool(id string) string {
+	client := Redis.GetClient()
+	if client == nil {
+		log.Printf("Redis client not initialized. Skipping Server Pool based initialization")
+		return ""
+	}
+
+	ctx := context.Background()
+	result := client.Get(ctx, getServerPoolKey(id))
+	if result.Err() != nil {
+		log.Printf("Could not find server pool logs in Redis for Load Balancer with ID: %s %s", id, result.Err())
+		return ""
+	}
+	return result.Val()
+}
 
 func StartServerPoolLogRoutine(config Config) {
 	logInterval, parseErr := time.ParseDuration(config.ServerPoolInterval)
@@ -321,7 +340,7 @@ func StartServerPoolLogRoutine(config Config) {
 					log.Printf("Error parsing servers for server pool: %v", err)
 				}
 
-				redisErr := client.Set(context.Background(), "SERVER_POOL:"+id, servers, expiry).Err()
+				redisErr := client.Set(context.Background(), getServerPoolKey(id), servers, expiry).Err()
 				if redisErr != nil {
 					log.Printf("SERVER POOL LOGGING ERROR: %v", redisErr)
 				}
