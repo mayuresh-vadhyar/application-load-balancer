@@ -186,8 +186,8 @@ func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
 	return server, nil
 }
 
-func RecreateServer(obj Server) (*Server, error) {
-	parsedUrl, err := url.Parse(obj.URL.String())
+func RecreateServer(obj ServerPoolServer) (*Server, error) {
+	parsedUrl, err := url.Parse(obj.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -291,6 +291,26 @@ func getServerDataFromPool(id string) string {
 		return ""
 	}
 	return result.Val()
+}
+
+func GetServersFromPool(id string) []*Server {
+	data := getServerDataFromPool(id)
+	serverList := []ServerPoolServer{}
+	if err := json.Unmarshal([]byte(data), &serverList); err != nil && data != "" {
+		log.Printf("Error unmarshaling server pool data for Load Balancer with ID: %s", id)
+		return nil
+	}
+
+	servers := []*Server{}
+	for _, serverObj := range serverList {
+		server, recreateErr := RecreateServer(serverObj)
+		if recreateErr != nil {
+			log.Printf("Error recreating server: %v", recreateErr)
+			return nil
+		}
+		servers = append(servers, server)
+	}
+	return servers
 }
 
 func StartServerPoolLogRoutine(config Config) {
