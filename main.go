@@ -245,8 +245,17 @@ func main() {
 	lb = loadBalancerStrategy.GetLoadBalancingStrategy(config.Algorithm)
 	InitializeLogResponseWriter(config.DisableLogs)
 	server.InitializeHealthCheckConfig(config.HealthCheck)
+	serversFromPool := server.GetServersFromPool(config.Id)
+
+	if serversFromPool == nil || len(serversFromPool) == 0 {
+		log.Print("Initializing server list from config file")
+		server.SetServers(lb.CreateServerList(config))
+	} else {
+		log.Print("Initializing server list from Redis server pool")
+		server.SetServers(serversFromPool)
+	}
+
 	server.StartServerPoolLogRoutine(config)
-	server.SetServers(lb.CreateServerList(config))
 	InitializeRequestCaching(config.RequestCacheExpiry)
 	rl := rateLimiter.GetRateLimiter()
 	client = Redis.GetClient()

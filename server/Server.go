@@ -358,6 +358,7 @@ func StartServerPoolLogRoutine(config Config) {
 				servers, err := json.Marshal(poolServers)
 				if err != nil {
 					log.Printf("Error parsing servers for server pool: %v", err)
+					continue
 				}
 
 				redisErr := client.Set(context.Background(), getServerPoolKey(id), servers, expiry).Err()
