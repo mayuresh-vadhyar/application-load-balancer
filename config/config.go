@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"sync"
+	"time"
 )
 
 type RateLimitConfig struct {
@@ -57,4 +58,9 @@ func GetConfig() Config {
 	})
 
 	return config
+}
+
+func ServerPoolExpiryExists(expiry string) bool {
+	duration, err := time.ParseDuration(expiry)
+	return err == nil && duration > 0
 }

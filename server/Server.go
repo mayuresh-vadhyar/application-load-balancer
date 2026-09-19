@@ -277,6 +277,14 @@ func getServerPoolKey(id string) string {
 	return "SERVER_POOL:" + id
 }
 
+func ExistsInServerPool(id string) bool {
+	client := Redis.GetClient()
+	if client == nil {
+		return false
+	}
+	return client.Exists(context.Background(), getServerPoolKey(id)).Val() > 0
+}
+
 func getServerDataFromPool(id string) string {
 	client := Redis.GetClient()
 	if client == nil {
