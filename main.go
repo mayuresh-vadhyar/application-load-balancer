@@ -240,8 +240,29 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func resolveServerPoolID(cfg config.Config) config.Config {
+	if !config.ServerPoolExpiryExists(cfg.ServerPoolExpiry) {
+		return cfg
+	}
+
+	id := cfg.Id
+	for id == "" || server.ExistsInServerPool(id) {
+		generatedID, err := config.GenerateID()
+		if err != nil {
+			log.Fatalf("Error generating server pool ID: %v", err)
+		}
+		id = generatedID
+	}
+
+	if id != cfg.Id {
+		config.SetID(id)
+		cfg.Id = id
+	}
+	return cfg
+}
+
 func main() {
-	config := config.GetConfig()
+	config := resolveServerPoolID(config.GetConfig())
 	lb = loadBalancerStrategy.GetLoadBalancingStrategy(config.Algorithm)
 	InitializeLogResponseWriter(config.DisableLogs)
 	server.InitializeHealthCheckConfig(config.HealthCheck)
