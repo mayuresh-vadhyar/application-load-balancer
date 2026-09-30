@@ -65,6 +65,7 @@ var healthCheckOnce sync.Once
 var maxUnhealthyChecks int8 = -1
 var idMutex sync.Mutex
 var lastId int = 0
+var healthCheckWG sync.WaitGroup
 
 type serverList struct {
 	sync.RWMutex

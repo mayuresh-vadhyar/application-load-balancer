@@ -8,7 +8,9 @@ import (
 )
 
 func StartHealthCheckRoutine(ctx context.Context, s *Server, maxRestart int8) {
+	healthCheckWG.Add(1)
 	go func() {
+		defer healthCheckWG.Done()
 		var restartCount int8 = 0
 
 		for {
@@ -54,7 +56,11 @@ func runHealthCheck(ctx context.Context, s *Server, healthCheckInterval time.Dur
 			return true
 
 		case <-ticker.C:
-			res, err := http.Head(s.URL.String())
+			req, err := http.NewRequestWithContext(ctx, http.MethodHead, s.URL.String(), nil)
+			if err != nil {
+				return false
+			}
+			res, err := http.DefaultClient.Do(req)
 			s.Mutex.Lock()
 			if err == nil && res.StatusCode == http.StatusOK {
 				s.IsHealthy = true
@@ -70,6 +76,9 @@ func runHealthCheck(ctx context.Context, s *Server, healthCheckInterval time.Dur
 				s.IsHealthy = false
 			}
 			s.Mutex.Unlock()
+			if res != nil {
+				res.Body.Close()
+			}
 		}
 	}
 }
