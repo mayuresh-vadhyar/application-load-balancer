@@ -118,7 +118,9 @@ func (list *serverList) removeByURL(targetUrl string) bool {
 	defer list.Unlock()
 	for i, item := range list.servers {
 		if item.URL.String() == targetUrl {
+			if item.StopHealthCheck != nil {
 			item.StopHealthCheck()
+			}
 			list.servers = slices.Delete(list.servers, i, i+1)
 			return true
 		}
@@ -137,6 +139,16 @@ func GetServers() []*Server {
 func SetServers(servers []*Server) {
 	activeServers.replace(servers)
 }
+
+func StopHealthChecks() {
+	for _, item := range GetServers() {
+		if item.StopHealthCheck != nil {
+			item.StopHealthCheck()
+		}
+	}
+	healthCheckWG.Wait()
+}
+
 func FindServerByURL(targetUrl string) *Server {
 	return activeServers.findByURL(targetUrl)
 }
