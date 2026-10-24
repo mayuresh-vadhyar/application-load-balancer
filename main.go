@@ -281,11 +281,22 @@ func main() {
 	rl := rateLimiter.GetRateLimiter()
 	client = Redis.GetClient()
 
-	http.Handle("/", loggingMiddleware(http.HandlerFunc(proxyHandler)))
-	http.HandleFunc("/server", serverHandler)
-	http.HandleFunc("/server/stats", serverStatsHandler)
-	http.HandleFunc("/server/dashboard", serverDashboardHandler)
+	mux := http.NewServeMux()
+	mux.Handle("/", loggingMiddleware(http.HandlerFunc(proxyHandler)))
+	mux.HandleFunc("/server", serverHandler)
+	mux.HandleFunc("/server/stats", serverStatsHandler)
+	mux.HandleFunc("/server/dashboard", serverDashboardHandler)
 
+	log.Printf("Starting load balancer(%s) on port %s", config.Id, config.Port)
+	var handler http.Handler = mux
+	if rl != nil {
+		handler = rl.RateLimit(mux)
+	}
+	httpServer := &http.Server{Addr: config.Port, Handler: handler}
+	serveErrors := make(chan error, 1)
+	go func() {
+		serveErrors <- httpServer.ListenAndServe()
+	}()
 	log.Println("Starting load balancer on port", config.Port)
 	var err error
 	if rl == nil {
