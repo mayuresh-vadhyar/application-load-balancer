@@ -5,9 +5,13 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/mayuresh-vadhyar/application-load-balancer/Redis"
@@ -276,7 +280,11 @@ func main() {
 		server.SetServers(serversFromPool)
 	}
 
-	server.StartServerPoolLogRoutine(config)
+	signalContext, stopSignals := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopSignals()
+	shutdownContext, cancelShutdown := context.WithCancel(signalContext)
+	defer cancelShutdown()
+	serverPoolRoutineDone := server.StartServerPoolLogRoutine(shutdownContext, config)
 	InitializeRequestCaching(config.RequestCacheExpiry)
 	rl := rateLimiter.GetRateLimiter()
 	client = Redis.GetClient()
@@ -297,14 +305,20 @@ func main() {
 	go func() {
 		serveErrors <- httpServer.ListenAndServe()
 	}()
-	log.Println("Starting load balancer on port", config.Port)
-	var err error
-	if rl == nil {
-		err = http.ListenAndServe(config.Port, nil)
-	} else {
-		err = http.ListenAndServe(config.Port, rl.RateLimit(http.DefaultServeMux))
+
+	select {
+	case <-signalContext.Done():
+	case err := <-serveErrors:
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("Load balancer server stopped: %v", err)
+		}
 	}
-	if err != nil {
-		log.Fatalf("Error starting load balancer: %s\n", err.Error())
+	log.Printf("Graceful shutdown initiated for load balancer with ID: %s", config.Id)
+
+	if client != nil {
+		if err := client.Close(); err != nil {
+			log.Printf("Error closing Redis client for load balancer %s: %v", config.Id, err)
+		}
 	}
+	log.Printf("Terminated load balancer with ID: %s", config.Id)
 }
