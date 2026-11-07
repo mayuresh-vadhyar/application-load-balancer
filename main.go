@@ -313,7 +313,23 @@ func main() {
 			log.Printf("Load balancer server stopped: %v", err)
 		}
 	}
+	cancelShutdown()
 	log.Printf("Graceful shutdown initiated for load balancer with ID: %s", config.Id)
+
+	shutdownContext, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := httpServer.Shutdown(shutdownContext); err != nil {
+		log.Printf("Graceful HTTP shutdown failed for load balancer %s: %v", config.Id, err)
+		if closeErr := httpServer.Close(); closeErr != nil {
+			log.Printf("Error closing HTTP server for load balancer %s: %v", config.Id, closeErr)
+		}
+	}
+
+	server.StopHealthChecks()
+	<-serverPoolRoutineDone
+	if transport, ok := http.DefaultTransport.(*http.Transport); ok {
+		transport.CloseIdleConnections()
+	}
 
 	if client != nil {
 		if err := client.Close(); err != nil {
