@@ -334,20 +334,22 @@ func GetServersFromPool(id string) []*Server {
 	return servers
 }
 
-func StartServerPoolLogRoutine(config Config) {
+func StartServerPoolLogRoutine(ctx context.Context, config Config) <-chan struct{} {
+	done := make(chan struct{})
 	logInterval, parseErr := time.ParseDuration(config.ServerPoolInterval)
 	if parseErr != nil || logInterval <= 0 {
 		log.Printf("Server Pool Interval not configured. Skipping Server Pool Logging")
-		return
+		close(done)
+		return done
 	}
 
 	client := Redis.GetClient()
 	if client == nil {
 		log.Printf("Redis client not initialized. Skipping Server Pool Logging")
-		return
+		close(done)
+		return done
 	}
 
-	ctx := context.Background()
 	ticker := time.NewTicker(logInterval)
 	id := config.Id
 	expiry, expiryErr := time.ParseDuration(config.ServerPoolExpiry)
@@ -356,11 +358,12 @@ func StartServerPoolLogRoutine(config Config) {
 	}
 
 	go func() {
+		defer close(done)
+		defer ticker.Stop()
 		for {
 			select {
 			case <-ctx.Done():
 				log.Printf("Stopping Server Pool Log Routine for Load Balancer with ID: %s", id)
-				ticker.Stop()
 				return
 			case <-ticker.C:
 				poolServers := make([]ServerPoolServer, 0, len(GetServers()))
@@ -382,11 +385,12 @@ func StartServerPoolLogRoutine(config Config) {
 					continue
 				}
 
-				redisErr := client.Set(context.Background(), getServerPoolKey(id), servers, expiry).Err()
+				redisErr := client.Set(ctx, getServerPoolKey(id), servers, expiry).Err()
 				if redisErr != nil {
 					log.Printf("SERVER POOL LOGGING ERROR: %v", redisErr)
 				}
 			}
 		}
 	}()
+	return done
 }
