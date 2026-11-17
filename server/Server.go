@@ -119,7 +119,7 @@ func (list *serverList) removeByURL(targetUrl string) bool {
 	for i, item := range list.servers {
 		if item.URL.String() == targetUrl {
 			if item.StopHealthCheck != nil {
-			item.StopHealthCheck()
+				item.StopHealthCheck()
 			}
 			list.servers = slices.Delete(list.servers, i, i+1)
 			return true
@@ -174,7 +174,7 @@ func CreateServer(rawUrl string) (*Server, error) {
 		IsHealthy:       true,
 		StopHealthCheck: cancel,
 	}
-	go StartHealthCheckRoutine(ctx, server, maxRestart)
+	StartHealthCheckRoutine(ctx, server, maxRestart)
 
 	return server, nil
 }
@@ -194,7 +194,7 @@ func CreateWeightedServer(rawUrl string, weight int) (*Server, error) {
 		IsHealthy:       true,
 		StopHealthCheck: cancel,
 	}
-	go StartHealthCheckRoutine(ctx, server, maxRestart)
+	StartHealthCheckRoutine(ctx, server, maxRestart)
 
 	return server, nil
 }
@@ -218,7 +218,7 @@ func RecreateServer(obj ServerPoolServer) (*Server, error) {
 		Weight:        obj.Weight,
 		CurrentWeight: obj.CurrentWeight,
 	}
-	go StartHealthCheckRoutine(ctx, server, maxRestart)
+	StartHealthCheckRoutine(ctx, server, maxRestart)
 
 	return server, nil
 }

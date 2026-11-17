@@ -17,11 +17,11 @@ type Config = config.Config
 type Identifier string
 
 type RateLimiter struct {
-	client     *redis.Client
-	strategy   RateLimitStrategy
+	client             *redis.Client
+	strategy           RateLimitStrategy
 	identifierStrategy Identifier
-	limit      int
-	window     time.Duration
+	limit              int
+	window             time.Duration
 }
 
 const (
@@ -90,11 +90,11 @@ func GetRateLimiter() *RateLimiter {
 	}
 
 	return &RateLimiter{
-		client:     client,
-		strategy:   strategy,
+		client:             client,
+		strategy:           strategy,
 		identifierStrategy: identifierStrategy,
-		limit:      limit,
-		window:     window,
+		limit:              limit,
+		window:             window,
 	}
 
 }
