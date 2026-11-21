@@ -1,6 +1,6 @@
 # Application Load Balancer
 
-Lightweight HTTP load balancer implemented in Go. Routes incoming requests to a pool of backend servers using multiple balancing algorithms, performs health checks, and optionally enforces Redis-backed rate limiting.
+Lightweight HTTP load balancer implemented in Go. Routes incoming requests to a pool of backend servers using multiple balancing algorithms, performs health checks, exposes server metrics and a dashboard, and supports optional Redis-backed rate limiting and server-pool persistence.
 
 **Features**
 - **Load Balancing Algorithms:** Round Robin, Weighted Round Robin, IP-hash, URL-hash.
@@ -8,8 +8,8 @@ Lightweight HTTP load balancer implemented in Go. Routes incoming requests to a 
 - **Server Management API:** Register, list and remove backend servers via `/server` (GET, POST, DELETE).
 - **Proxying:** Proxies requests on `/` to chosen backend and injects `tracking-id` and `X-Forwarded-Server` headers.
 - **Request Logging:** Detailed logging with response time (TAT), status codes, response body size, and target server tracking.
-- **Request Caching:** Redis-backed response caching with configurable expiry for improved performance.
-- **Server Pool Caching:** Cached server list with interval-based updates and expiry configuration.
+- **Request Caching:** Redis-backed GET response caching is implemented; see the limitation below before relying on it.
+- **Server Pool Persistence:** Saves server state to Redis on an interval and restores it at startup using the load balancer ID.
 - **Rate Limiting (optional):** Redis-backed strategies like Fixed Window, Token Bucket, Leaky Bucket and Sliding Window (Lua script) with configurable request identification.
 - **Config-driven:** Behavior controlled by `config.json`.
 
@@ -33,7 +33,7 @@ All runtime configuration lives in `config.json`. Key fields:
 - **`rateLimit`**: Rate limiter config with sub-fields:
   - **`enable`**: Enable/disable rate limiting.
   - **`strategy`**: Rate limiting strategy. Valid values: `FW` (Fixed Window), `TB` (Token Bucket), `LB` (Leaky Bucket) `SW` (Sliding Window).
-  - **`identifier`**: Identifier type for rate limiting. Currently supported: `IP` (by client IP).
+  - **`identifier`**: Identifier type for rate limiting: `IP`, `ApiKey`, `UserID`, `ApiPath`, or `Resource`.
   - **`limit`**: Request limit per window (e.g. `10`).
   - **`window`**: Window duration for rate limit (e.g. `1m`).
   - **`rate`**: Token generation rate for Token Bucket strategy (tokens per window).
@@ -43,7 +43,7 @@ All runtime configuration lives in `config.json`. Key fields:
   - **`cooldown`**: Duration to wait before retrying a failed health check (e.g. `5s`).
   - **`maxRestart`**: Maximum number of health check restart attempts before removing server.
 
-Example `config.json` (minimal):
+Example `config.json` (minimal; use a Redis address to enable Redis-backed features):
 
 ```json
 {
@@ -55,6 +55,7 @@ Example `config.json` (minimal):
   "serverPoolInterval": "5s",
   "serverPoolExpiry": "10s",
   "requestCacheExpiry": "0s",
+  "redis": "localhost:6379",
   "rateLimit": { "enable": false }
 }
 ```
@@ -77,15 +78,14 @@ Headers:
 - Can be disabled to reduce overhead in high-traffic scenarios.
 
 **Request Caching**
-- Enabled when `config.json` provides a Redis URL and `requestCacheExpiry` is set to a non-zero duration.
-- Caches response bodies based on the request URL path and query string to reduce backend load.
-- Cache keys are stored in Redis with the configured expiry duration.
-- Requests with `Cache-Control: no-cache` bypass the cache and are always forwarded to the upstream.
+- The code includes an optional Redis-backed GET response cache keyed by URL path and query string; only `200 OK` upstream response bodies are stored.
+- Requests with `Cache-Control: no-cache` bypass the cache and are forwarded to the upstream. Cache hits include `X-Cache-Hit: true`.
+- **Known limitation:** Request-cache initialization currently does not enable caching when `requestCacheExpiry` is a valid duration. The cache will remain inactive until this is corrected in the application code.
 
-**Server Pool Caching**
-- The list of registered servers with their latest status is cached and refreshed at `serverPoolInterval` with a TTL of `serverPoolExpiry`.
-- Reduces memory churn and improves performance for large server pools.
-- Makes it efficient for highly scaling distributed systems
+**Server Pool Persistence**
+- When Redis is available and `serverPoolInterval` is positive, the current server state is periodically saved under a key associated with the load balancer `Id`.
+- The saved pool expires according to `serverPoolExpiry` and is restored at startup when a matching pool exists.
+- Persisted state includes backend URLs, health, weights, and request counters.
 
 **Rate Limiting**
 - Enabled when `config.json` provides a Redis URL and `rateLimit.enable` is `true`.
