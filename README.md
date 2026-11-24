@@ -6,12 +6,15 @@ Lightweight HTTP load balancer implemented in Go. Routes incoming requests to a 
 - **Load Balancing Algorithms:** Round Robin, Weighted Round Robin, IP-hash, URL-hash.
 - **Health Checks:** Periodic upstream health checks with cooldowns and restart limits.
 - **Server Management API:** Register, list and remove backend servers via `/server` (GET, POST, DELETE).
+- **Monitoring:** Per-server request and health statistics via `/server/stats` and an HTML dashboard at `/server/dashboard`.
 - **Proxying:** Proxies requests on `/` to chosen backend and injects `tracking-id` and `X-Forwarded-Server` headers.
+- **Upstream Failure Handling:** Marks backends unhealthy when a proxy connection fails or the backend responds with `502 Bad Gateway`.
 - **Request Logging:** Detailed logging with response time (TAT), status codes, response body size, and target server tracking.
 - **Request Caching:** Redis-backed GET response caching is implemented; see the limitation below before relying on it.
 - **Server Pool Persistence:** Saves server state to Redis on an interval and restores it at startup using the load balancer ID.
 - **Rate Limiting (optional):** Redis-backed strategies like Fixed Window, Token Bucket, Leaky Bucket and Sliding Window (Lua script) with configurable request identification.
 - **Config-driven:** Behavior controlled by `config.json`.
+- **Graceful Shutdown:** Handles interrupt and termination signals, stops health checks, and closes HTTP and Redis resources.
 
 **Quick Links**
 - Config: [config.json](config.json)
@@ -64,8 +67,11 @@ Example `config.json` (minimal; use a Redis address to enable Redis-backed featu
 - `GET /server` : List registered servers. Supports query params `isHealthy` and `urlParam`.
 - `POST /server` : Register a new server. Body: `{ "url": "http://<host>:<port>", "weight": <int> }`.
 - `DELETE /server` : Remove a server. Body: `{ "url": "http://<host>:<port>" }`.
-- `GET /server/stats` : Return per-server stats including request count, active request count, and health status.
+- `GET /server/stats` : Return per-server ID, URL, health status, total request count, and active request count as JSON.
+- `GET /server/dashboard` : Render an HTML table of per-server health and request statistics.
 - `GET /` : Main proxy endpoint — forwards requests to upstream hosts.
+
+Server management endpoints accept only their documented HTTP methods. `POST /server` expects a JSON body containing a `url`; weights are configured for initial backends in the `weights` array alongside `servers`.
 
 Headers:
 - `tracking-id`: added to both request and response to correlate proxied requests.
@@ -109,7 +115,7 @@ Headers:
 
 **Health Checks**
 - Background routines perform periodic `HEAD` requests to upstream servers at the configured `healthCheck.interval`.
-- Servers failing checks are marked unhealthy and isolated from load balancing.
+- Servers failing checks are marked unhealthy and skipped by load-balancing strategies; proxy connection failures and upstream `502` responses also mark a server unhealthy.
 - After a server is marked unhealthy, it waits for `healthCheck.cooldown` before attempting recovery.
 - Each failed recovery attempt is tracked; if `healthCheck.maxRestart` restarts are exhausted, the server is permanently removed from the pool.
 - A server is marked unhealthy after `healthCheck.maxUnhealthyChecks` consecutive failed checks.
@@ -130,8 +136,8 @@ go run main.go
 There is also `go-start.bat` included for a quick start on Windows.
 
 **Project Layout (high level)**
-- `main.go` — HTTP server, routing, initialization, request caching calls.
-- `dashboard.go` — Server stats dashboard: collects per-server metrics (request count, active requests, health) and renders an HTML view.
+- `main.go` — HTTP server, routing, initialization, request caching, and graceful shutdown.
+- `dashboard.go` — HTML dashboard for per-server health and request metrics.
 - `LogResponseWriter.go` — Custom response writer for capturing and logging response metadata (status, size, timing).
 - `loadBalancerStrategy/` — Load balancing algorithm implementations (Round Robin, Weighted, IP Hash, URL Hash).
 - `server/` — Server registration, health checks, reverse proxy handling.
