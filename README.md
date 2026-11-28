@@ -23,7 +23,7 @@ Lightweight HTTP load balancer implemented in Go. Routes incoming requests to a 
 **Configuration**
 All runtime configuration lives in `config.json`. Key fields:
 
-- **`Id`**: Unique identifier for the load balancer instance.
+- **`Id`**: Unique identifier for the load balancer instance and its Redis-persisted server pool.
 - **`algorithm`**: Balancing algorithm to use. Valid values: `RR` (Round Robin), `WRR` (Weighted Round Robin), `IPHash`, `UrlHash`.
 - **`port`**: HTTP listen port (e.g. `":8080"`).
 - **`disableLogs`**: Disable request logging when `true`.
@@ -32,7 +32,7 @@ All runtime configuration lives in `config.json`. Key fields:
 - **`serverPoolInterval`**: Server pool cache refreshing interval (e.g. `5s`).
 - **`serverPoolExpiry`**: Server pool cache expiry duration (e.g. `10s`).
 - **`requestCacheExpiry`**: API request Response cache expiry duration caching (e.g. `20s`). Requires Redis.
-- **`redis`**: Redis address for rate limiting and response caching (e.g. `127.0.0.1:6379`).
+- **`redis`**: Redis address for rate limiting, response caching, and server-pool persistence (e.g. `127.0.0.1:6379`).
 - **`rateLimit`**: Rate limiter config with sub-fields:
   - **`enable`**: Enable/disable rate limiting.
   - **`strategy`**: Rate limiting strategy. Valid values: `FW` (Fixed Window), `TB` (Token Bucket), `LB` (Leaky Bucket) `SW` (Sliding Window).
